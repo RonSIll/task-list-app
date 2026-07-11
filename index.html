@@ -257,8 +257,8 @@
 <div id="app">
   <main class="content" id="content"><div class="content-inner" id="contentInner"></div></main>
   <div class="project-row" id="projectRow">
-    <button class="nav-tab" id="projectFilterBtn">Project</button>
     <button class="nav-tab" id="allProjectsBtn">All Projects</button>
+    <button class="nav-tab" id="projectFilterBtn">Project</button>
   </div>
   <div class="status-grid" id="statusGrid"></div>
   <div class="bottom-icons">
@@ -372,7 +372,10 @@
 
   // One-time seed for first-ever run on a device with no saved data yet.
   // Carried over from Ron's prior task app; safe to delete once loaded.
-  var SEED_TASKS = [];
+  var SEED_TASKS = [
+  ].map(function (t) {
+    return { id: uid(), title: t.title, project: t.project, status: t.status, completedAt: null };
+  });
 
   var state = {
     tasks: [],

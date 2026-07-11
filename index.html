@@ -899,7 +899,12 @@
   document.getElementById("pickerClose").addEventListener("click", closePicker);
 
   el.tabMain.addEventListener("click", function () { state.activeTab = "main"; render(); });
-  el.tabTriage.addEventListener("click", function () { state.activeTab = "triage"; render(); });
+  el.tabTriage.addEventListener("click", function () {
+    state.activeTab = "triage";
+    state.projectFilter = null;
+    saveProjectFilter();
+    render();
+  });
 
   el.projectFilterBtn.addEventListener("click", function () {
     openPicker("Project", PROJECTS, state.projectFilter, null, function (val) {

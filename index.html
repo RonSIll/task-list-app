@@ -22,14 +22,7 @@
     --border: #e3e3e6;
     --accent: #4f6bff;
     --red: #ff3b30;
-    --status-priority: #d6006e;    --status-priority-on: #ffffff;
-    --status-active: #84cc16;      --status-active-on: #1c1c1e;
-    --status-waiting: #6b6b70;     --status-waiting-on: #ffffff;
-    --status-scheduled: #b8860b;   --status-scheduled-on: #ffffff;
-    --status-optimize: #7c3aed;    --status-optimize-on: #ffffff;
-    --status-getdo: #0d9488;       --status-getdo-on: #ffffff;
-    --status-someday: #3b82c4;     --status-someday-on: #ffffff;
-    --status-complete: #1c1c1e;    --status-complete-on: #ffffff;
+    --tile-neutral: #1c1c1e;    --tile-neutral-on: #ffffff;
   }
   @media (prefers-color-scheme: dark) {
     :root {
@@ -41,14 +34,7 @@
       --border: #2c2c2e;
       --accent: #7b8fff;
       --red: #ff453a;
-      --status-priority: #ff5cad;    --status-priority-on: #1c1c1e;
-      --status-active: #a6e22e;      --status-active-on: #1c1c1e;
-      --status-waiting: #98989d;     --status-waiting-on: #1c1c1e;
-      --status-scheduled: #e0b400;   --status-scheduled-on: #1c1c1e;
-      --status-optimize: #c4a6f5;    --status-optimize-on: #1c1c1e;
-      --status-getdo: #2dd4bf;       --status-getdo-on: #1c1c1e;
-      --status-someday: #7dc4f0;     --status-someday-on: #1c1c1e;
-      --status-complete: #5a5a5e;    --status-complete-on: #f5f5f7;
+      --tile-neutral: #5a5a5e;    --tile-neutral-on: #f5f5f7;
     }
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -105,8 +91,6 @@
     content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
     background: var(--card-status, transparent);
   }
-  .card.complete { opacity: 0.55; }
-  .card.complete .card-title { text-decoration: line-through; color: var(--text2); }
   .card-delete-bg {
     position: absolute; inset: 0; background: transparent; color: transparent;
     display: flex; align-items: center; justify-content: flex-end;
@@ -205,7 +189,10 @@
   .sheet-header button {
     border: none; background: none; font-size: 16px; cursor: pointer; padding: 6px;
   }
-  #editClose, #pickerClose, #quickAddClose, #settingsClose, #confirmClose { color: var(--text2); }
+  #editClose, #pickerClose, #quickAddClose, #settingsClose, #confirmClose,
+  #settingsHomeClose, #printBack, #editProjectsBack, #editStatusesBack { color: var(--text2); }
+  .sheet-title { font-size: 15px; font-weight: 600; }
+  .sheet-header-spacer { width: 28px; display: inline-block; }
   .sheet input[type="text"] {
     width: 100%; border: none; padding: 16px 4px; font-size: 17px;
     background: transparent; color: var(--text); outline: none;
@@ -248,11 +235,83 @@
   .confirm-text { font-size: 17px; font-weight: 500; padding: 8px 4px 16px; }
   #confirmDelete { background: var(--red); color: #fff; border: 1px solid var(--red); }
   #confirmKeep { background: var(--bg); color: var(--text2); border: 1px solid var(--border); }
+
+  /* Settings home */
+  .settings-row {
+    height: 52px; display: flex; align-items: center; justify-content: space-between;
+    padding: 0 4px; font-size: 16px; font-weight: 500; color: var(--text);
+    border-bottom: 0.5px solid var(--border); cursor: pointer;
+  }
+  .settings-row:last-child { border-bottom: none; }
+  .settings-row .chevron { color: var(--text3); font-size: 16px; }
+
+  /* Print sub-sheet */
+  .print-sheet-body { display: flex; align-items: center; justify-content: center; padding: 40px 16px; }
+  .print-btn {
+    background: var(--accent); color: #fff; border: none; border-radius: 0; padding: 0;
+    padding: 14px 24px; font-size: 16px; font-weight: 600; cursor: pointer;
+  }
+
+  /* Edit Projects sub-sheet */
+  .proj-list { overflow-y: auto; max-height: 300px; margin: 0 -16px; padding: 0 16px; }
+  .proj-edit-row {
+    display: flex; align-items: center; gap: 6px; padding: 10px 0;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .proj-edit-row.hidden-project { opacity: 0.4; }
+  .proj-edit-row:last-child { border-bottom: none; }
+  .proj-move-btn {
+    border: none; background: none; color: var(--text3); font-size: 14px; padding: 4px; cursor: pointer; line-height: 1;
+  }
+  .proj-move-btn:disabled { opacity: 0.3; cursor: default; }
+  .proj-name-input {
+    flex: 1; min-width: 0; border: none; background: transparent; color: var(--text);
+    font-size: 15px; padding: 6px 4px; outline: none;
+  }
+  .proj-hide-btn {
+    border: none; background: none; color: var(--text2); padding: 4px; cursor: pointer;
+    display: flex; align-items: center;
+  }
+
+  /* Edit Statuses sub-sheet */
+  .status-list { overflow-y: auto; max-height: 300px; margin: 0 -16px; padding: 0 16px; }
+  .status-edit-row {
+    display: flex; align-items: center; gap: 10px; padding: 12px 0;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .status-edit-row:last-child { border-bottom: none; }
+  .status-name-input {
+    flex: 1; min-width: 0; border: none; background: transparent; color: var(--text);
+    font-size: 15px; padding: 6px 4px; outline: none;
+  }
+  .status-swatch-btn {
+    width: 24px; height: 24px; border-radius: 50%; border: none; padding: 0; cursor: pointer; flex: 0 0 auto;
+    background: var(--sw-color, var(--text3));
+  }
+  .swatch-accordion {
+    display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px;
+    padding: 12px 4px 16px;
+  }
+  .swatch-option {
+    width: 32px; height: 32px; border-radius: 50%; border: 2px solid transparent; padding: 0; cursor: pointer;
+    background: var(--sw-color);
+  }
+  .swatch-option.selected { border-color: var(--text); }
+
   [hidden] { display: none !important; }
   .toast {
     position: fixed; left: 50%; bottom: calc(240px + env(safe-area-inset-bottom)); transform: translateX(-50%);
     background: var(--text); color: var(--bg); border-radius: 0;
     padding: 8px 14px; font-size: 13px; z-index: 30;
+  }
+
+  @media print {
+    .project-row, .status-grid, .bottom-icons, .backdrop, .sheet { display: none !important; }
+    html, body, #app { height: auto !important; overflow: visible !important; position: static !important; }
+    .content { overflow: visible !important; padding: 0 !important; }
+    body, .content, .card, .project-header, .status-label { background: #fff !important; color: #000 !important; }
+    .card::before { background: #000 !important; }
+    .card { border: 1px solid #ccc; box-shadow: none; }
   }
 </style>
 </head>
@@ -265,7 +324,7 @@
   </div>
   <div class="status-grid" id="statusGrid"></div>
   <div class="bottom-icons">
-    <button class="icon-btn" id="settingsBtn" aria-label="Sync settings" title="Sync settings">
+    <button class="icon-btn" id="settingsBtn" aria-label="Settings" title="Settings">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="12" cy="12" r="3"/>
         <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82A1.65 1.65 0 0 0 3 13.09H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
@@ -325,8 +384,57 @@
   </div>
 </div>
 
+<div class="sheet" id="settingsHomeSheet" hidden style="max-height: 280px;">
+  <div class="sheet-header">
+    <button id="settingsHomeClose">&#10005;</button>
+    <span class="sheet-title">Settings</span>
+    <span class="sheet-header-spacer"></span>
+  </div>
+  <div class="settings-row" data-target="print">Print<span class="chevron">&#8250;</span></div>
+  <div class="settings-row" data-target="editProjects">Edit Projects<span class="chevron">&#8250;</span></div>
+  <div class="settings-row" data-target="editStatuses">Edit Statuses<span class="chevron">&#8250;</span></div>
+  <div class="settings-row" data-target="syncSetup">Sync Setup<span class="chevron">&#8250;</span></div>
+</div>
+
+<div class="sheet" id="printSheet" hidden style="max-height: 160px;">
+  <div class="sheet-header">
+    <button id="printBack">&#8249;</button>
+    <span class="sheet-title">Print</span>
+    <span class="sheet-header-spacer"></span>
+  </div>
+  <div class="print-sheet-body">
+    <button class="print-btn" id="printGo">Print</button>
+  </div>
+</div>
+
+<div class="sheet" id="editProjectsSheet" hidden style="max-height: 460px;">
+  <div class="sheet-header">
+    <button id="editProjectsBack">&#8249;</button>
+    <span class="sheet-title">Edit Projects</span>
+    <span class="sheet-header-spacer"></span>
+  </div>
+  <input type="text" id="addProjectInput" placeholder="New project…">
+  <div class="edit-selector-row">
+    <button class="edit-select" id="addProjectBtn">Add</button>
+  </div>
+  <div class="proj-list" id="projList"></div>
+</div>
+
+<div class="sheet" id="editStatusesSheet" hidden style="max-height: 460px;">
+  <div class="sheet-header">
+    <button id="editStatusesBack">&#8249;</button>
+    <span class="sheet-title">Edit Statuses</span>
+    <span class="sheet-header-spacer"></span>
+  </div>
+  <div class="status-list" id="statusList"></div>
+</div>
+
 <div class="sheet settings-sheet" id="settingsSheet" hidden>
-  <div class="sheet-header"><span style="font-weight:500;">Sync Setup</span><button id="settingsClose">&#10005;</button></div>
+  <div class="sheet-header">
+    <button id="settingsClose">&#8249;</button>
+    <span class="sheet-title">Sync Setup</span>
+    <span class="sheet-header-spacer"></span>
+  </div>
   <label>GitHub owner</label>
   <input type="text" id="ghOwner" placeholder="e.g. RonSill">
   <label>Repo name</label>
@@ -345,15 +453,38 @@
   "use strict";
 
   // ---------- Data model ----------
-  var STATUS_ORDER = ["priority", "active", "waiting", "scheduled", "optimize", "getdo", "someday", "complete"];
-  var STATUS_LABELS = {
-    priority: "Priority", active: "Active", waiting: "Waiting",
-    scheduled: "Scheduled", optimize: "Optimize", getdo: "Get-Do",
-    someday: "Someday/Maybe", complete: "Complete"
+  var STATUS_KEYS = ["priority", "active", "waiting", "scheduled", "optimize", "getdo", "someday"];
+
+  // 12-color curated palette (Tuxx spec 2026-07-11). The first 7 entries are
+  // the original per-status defaults, in STATUS_KEYS order, so nothing shifts
+  // visually unless a status is actively recolored via Edit Statuses.
+  var PALETTE = [
+    { name: "Magenta",    light: "#d6006e", dark: "#ff5cad", onLight: "#ffffff", onDark: "#1c1c1e" },
+    { name: "Lime",       light: "#84cc16", dark: "#a6e22e", onLight: "#1c1c1e", onDark: "#1c1c1e" },
+    { name: "Gray",       light: "#6b6b70", dark: "#98989d", onLight: "#ffffff", onDark: "#1c1c1e" },
+    { name: "Gold",       light: "#b8860b", dark: "#e0b400", onLight: "#ffffff", onDark: "#1c1c1e" },
+    { name: "Purple",     light: "#7c3aed", dark: "#c4a6f5", onLight: "#ffffff", onDark: "#1c1c1e" },
+    { name: "Teal",       light: "#0d9488", dark: "#2dd4bf", onLight: "#ffffff", onDark: "#1c1c1e" },
+    { name: "Sky Blue",   light: "#3b82c4", dark: "#7dc4f0", onLight: "#ffffff", onDark: "#1c1c1e" },
+    { name: "Coral",      light: "#e2622c", dark: "#ff9457", onLight: "#ffffff", onDark: "#1c1c1e" },
+    { name: "Forest",     light: "#16794f", dark: "#4ade9e", onLight: "#ffffff", onDark: "#1c1c1e" },
+    { name: "Steel Blue", light: "#3d5a80", dark: "#8fb3d9", onLight: "#ffffff", onDark: "#1c1c1e" },
+    { name: "Rose",       light: "#c2478d", dark: "#ff8fc4", onLight: "#ffffff", onDark: "#1c1c1e" },
+    { name: "Slate",      light: "#4b5563", dark: "#94a3b8", onLight: "#ffffff", onDark: "#1c1c1e" }
+  ];
+
+  var DEFAULT_STATUS_META = {
+    priority:  { label: "Priority",      paletteIndex: 0 },
+    active:    { label: "Active",        paletteIndex: 1 },
+    waiting:   { label: "Waiting",       paletteIndex: 2 },
+    scheduled: { label: "Scheduled",     paletteIndex: 3 },
+    optimize:  { label: "Optimize",      paletteIndex: 4 },
+    getdo:     { label: "Get-Do",        paletteIndex: 5 },
+    someday:   { label: "Someday/Maybe", paletteIndex: 6 }
   };
 
-  // Fixed project list — set up once. Edit this array directly to change it.
-  var PROJECTS = [
+  // Seed project list — editable in-app from here on via Settings > Edit Projects.
+  var DEFAULT_PROJECTS = [
     "000 Knowledge",
     "100 Executive", "200 People", "300 Technology", "400 Finance",
     "500 BDO Strategy", "600 Operations", "700 Admin and Travel",
@@ -366,7 +497,6 @@
     "930 Personal Devt", "932 Knowledge", "940 AI"
   ];
 
-  var COMPLETE_RETENTION_DAYS = 60;
   var DATA_KEY = "taskListData";
   var FILTER_KEY = "taskListFilter";
   var PROJECT_FILTER_KEY = "taskListProjectFilter";
@@ -379,7 +509,9 @@
 
   var state = {
     tasks: [],
-    filter: STATUS_ORDER.filter(function (s) { return s !== "complete"; }),
+    projects: [],
+    statusMeta: {},
+    filter: STATUS_KEYS.slice(),
     projectFilter: null, // null = All Projects; otherwise a single project name
     activeTab: "main",
     editingTaskId: null,
@@ -391,17 +523,65 @@
     return "t-" + Date.now() + "-" + Math.random().toString(16).slice(2);
   }
 
+  function defaultProjectsState() {
+    return DEFAULT_PROJECTS.map(function (name) { return { name: name, hidden: false }; });
+  }
+  function defaultStatusMetaState() {
+    var m = {};
+    STATUS_KEYS.forEach(function (k) {
+      m[k] = { label: DEFAULT_STATUS_META[k].label, paletteIndex: DEFAULT_STATUS_META[k].paletteIndex };
+    });
+    return m;
+  }
+
+  // ---------- Color helpers ----------
+  function isDarkMode() {
+    return !!(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  }
+  function statusColor(key) {
+    var meta = state.statusMeta[key];
+    var sw = PALETTE[meta.paletteIndex];
+    return isDarkMode() ? { bg: sw.dark, on: sw.onDark } : { bg: sw.light, on: sw.onLight };
+  }
+  function statusLabel(key) {
+    return state.statusMeta[key].label;
+  }
+  function statusLabelsMap() {
+    var m = {};
+    STATUS_KEYS.forEach(function (k) { m[k] = state.statusMeta[k].label; });
+    return m;
+  }
+
+  // ---------- Project helpers ----------
+  function visibleProjectNames() {
+    return state.projects.filter(function (p) { return !p.hidden; }).map(function (p) { return p.name; });
+  }
+  function isProjectHidden(name) {
+    var p = state.projects.find(function (x) { return x.name === name; });
+    return p ? p.hidden : false;
+  }
+
   // ---------- Persistence (local) ----------
   function loadLocal() {
     try {
       var raw = localStorage.getItem(DATA_KEY);
       if (raw) {
-        state.tasks = JSON.parse(raw).tasks || [];
+        var parsed = JSON.parse(raw);
+        state.tasks = parsed.tasks || [];
+        state.projects = parsed.projects || defaultProjectsState();
+        state.statusMeta = parsed.statusMeta || defaultStatusMetaState();
       } else {
         state.tasks = SEED_TASKS;
+        state.projects = defaultProjectsState();
+        state.statusMeta = defaultStatusMetaState();
         saveLocal();
       }
-    } catch (e) { state.tasks = []; }
+    } catch (e) {
+      state.tasks = [];
+      state.projects = defaultProjectsState();
+      state.statusMeta = defaultStatusMetaState();
+    }
+    purgeCompleteTasks();
     try {
       var f = localStorage.getItem(FILTER_KEY);
       if (f) state.filter = JSON.parse(f);
@@ -417,7 +597,7 @@
   }
 
   function saveLocal() {
-    localStorage.setItem(DATA_KEY, JSON.stringify({ tasks: state.tasks }));
+    localStorage.setItem(DATA_KEY, JSON.stringify({ tasks: state.tasks, projects: state.projects, statusMeta: state.statusMeta }));
   }
 
   function saveFilter() {
@@ -455,8 +635,10 @@
       state.gh.sha = json.sha;
       var remote = JSON.parse(b64decode(json.content));
       state.tasks = remote.tasks || [];
+      state.projects = remote.projects || defaultProjectsState();
+      state.statusMeta = remote.statusMeta || defaultStatusMetaState();
       saveLocal();
-      purgeOldComplete();
+      purgeCompleteTasks();
       render();
     }).catch(function () {
       // Network or auth error — silently continue on local data.
@@ -467,7 +649,7 @@
     if (!state.gh) return;
     var body = {
       message: "Task List sync " + new Date().toISOString(),
-      content: b64encode(JSON.stringify({ tasks: state.tasks })),
+      content: b64encode(JSON.stringify({ tasks: state.tasks, projects: state.projects, statusMeta: state.statusMeta })),
       sha: state.gh.sha || undefined
     };
     fetch(ghApiUrl(), {
@@ -492,13 +674,14 @@
     pushTimer = setTimeout(ghPushNow, 500);
   }
 
-  // ---------- Auto-delete ----------
-  function purgeOldComplete() {
-    var cutoff = Date.now() - COMPLETE_RETENTION_DAYS * 24 * 60 * 60 * 1000;
+  // ---------- Complete-removal migration ----------
+  // The Complete status was removed 2026-07-11 in favor of direct delete.
+  // Any task still carrying status "complete" from before this upgrade is
+  // purged on load, fast-forwarding the 60-day timer that would have
+  // deleted it anyway.
+  function purgeCompleteTasks() {
     var before = state.tasks.length;
-    state.tasks = state.tasks.filter(function (t) {
-      return !(t.status === "complete" && t.completedAt && t.completedAt < cutoff);
-    });
+    state.tasks = state.tasks.filter(function (t) { return t.status !== "complete"; });
     if (state.tasks.length !== before) saveLocal();
   }
 
@@ -509,23 +692,81 @@
   }
 
   function addTask(title) {
-    state.tasks.push({ id: uid(), title: title, project: null, status: null, completedAt: null });
+    state.tasks.push({ id: uid(), title: title, project: null, status: null });
     persistAndSync();
   }
 
   function updateTask(id, patch) {
     var t = state.tasks.find(function (x) { return x.id === id; });
     if (!t) return;
-    var wasComplete = t.status === "complete";
     Object.assign(t, patch);
-    if (t.status === "complete" && !wasComplete) t.completedAt = Date.now();
-    if (t.status !== "complete") t.completedAt = null;
     persistAndSync();
   }
 
   function deleteTask(id) {
     state.tasks = state.tasks.filter(function (x) { return x.id !== id; });
     persistAndSync();
+  }
+
+  // ---------- Project mutations ----------
+  function moveProject(index, dir) {
+    var newIndex = index + dir;
+    if (newIndex < 0 || newIndex >= state.projects.length) return;
+    var tmp = state.projects[index];
+    state.projects[index] = state.projects[newIndex];
+    state.projects[newIndex] = tmp;
+    persistAndSync();
+    renderEditProjectsList();
+  }
+
+  function renameProject(index, newName) {
+    var p = state.projects[index];
+    if (!newName || newName === p.name) { renderEditProjectsList(); return; }
+    var oldName = p.name;
+    p.name = newName;
+    state.tasks.forEach(function (t) { if (t.project === oldName) t.project = newName; });
+    if (state.projectFilter === oldName) { state.projectFilter = newName; saveProjectFilter(); }
+    persistAndSync();
+    render();
+    renderEditProjectsList();
+  }
+
+  function toggleProjectHidden(index) {
+    var p = state.projects[index];
+    p.hidden = !p.hidden;
+    if (p.hidden && state.projectFilter === p.name) {
+      state.projectFilter = null;
+      saveProjectFilter();
+    }
+    persistAndSync();
+    render();
+    renderEditProjectsList();
+  }
+
+  function addProjectFromInput() {
+    var input = document.getElementById("addProjectInput");
+    var name = input.value.trim();
+    if (!name) return;
+    state.projects.push({ name: name, hidden: false });
+    input.value = "";
+    persistAndSync();
+    renderEditProjectsList();
+  }
+
+  // ---------- Status mutations ----------
+  function renameStatus(key, label) {
+    if (!label) { renderEditStatusesList(); return; }
+    state.statusMeta[key].label = label;
+    persistAndSync();
+    render();
+    renderEditStatusesList();
+  }
+
+  function recolorStatus(key, paletteIndex) {
+    state.statusMeta[key].paletteIndex = paletteIndex;
+    persistAndSync();
+    render();
+    renderEditStatusesList();
   }
 
   // ---------- Rendering ----------
@@ -540,6 +781,10 @@
     editProject: document.getElementById("editProject"),
     editStatus: document.getElementById("editStatus"),
     settingsSheet: document.getElementById("settingsSheet"),
+    settingsHomeSheet: document.getElementById("settingsHomeSheet"),
+    printSheet: document.getElementById("printSheet"),
+    editProjectsSheet: document.getElementById("editProjectsSheet"),
+    editStatusesSheet: document.getElementById("editStatusesSheet"),
     pickerSheet: document.getElementById("pickerSheet"),
     pickerTitle: document.getElementById("pickerTitle"),
     pickerList: document.getElementById("pickerList"),
@@ -550,6 +795,11 @@
     allProjectsBtn: document.getElementById("allProjectsBtn"),
     confirmSheet: document.getElementById("confirmSheet")
   };
+
+  var SETTINGS_SHEETS = ["settingsHomeSheet", "printSheet", "editProjectsSheet", "editStatusesSheet", "settingsSheet"];
+  function anySettingsSheetOpen() {
+    return SETTINGS_SHEETS.some(function (k) { return !el[k].hidden; });
+  }
 
   // ---------- Delete confirmation ----------
   var pendingDeleteId = null;
@@ -573,7 +823,7 @@
     if (cancel) cancel();
   }
 
-  var GRID_STATUSES = STATUS_ORDER.filter(function (s) { return s !== "complete"; });
+  var GRID_STATUSES = STATUS_KEYS;
 
   function render() {
     renderProjectRow();
@@ -591,7 +841,9 @@
   function renderNavTabs() {
     el.tabMain.classList.toggle("active", state.activeTab === "main");
     el.tabTriage.classList.toggle("active", state.activeTab === "triage");
-    var unassignedCount = state.tasks.filter(function (t) { return !t.project || !t.status; }).length;
+    var unassignedCount = state.tasks.filter(function (t) {
+      return (!t.project || !t.status) && !isProjectHidden(t.project);
+    }).length;
     el.triageBadge.textContent = String(unassignedCount);
     el.triageBadge.hidden = unassignedCount === 0;
   }
@@ -601,12 +853,13 @@
     GRID_STATUSES.forEach(function (s) {
       var tile = document.createElement("div");
       tile.className = "status-tile" + (state.filter.indexOf(s) !== -1 ? " selected" : "");
-      STATUS_LABELS[s].split("/").forEach(function (part, i) {
+      statusLabel(s).split("/").forEach(function (part, i) {
         if (i > 0) tile.appendChild(document.createElement("br"));
         tile.appendChild(document.createTextNode(part));
       });
-      tile.style.setProperty("--tile-color", "var(--status-" + s + ")");
-      tile.style.setProperty("--tile-on", "var(--status-" + s + "-on)");
+      var color = statusColor(s);
+      tile.style.setProperty("--tile-color", color.bg);
+      tile.style.setProperty("--tile-on", color.on);
       tile.addEventListener("click", function () {
         var idx = state.filter.indexOf(s);
         if (idx !== -1) {
@@ -624,8 +877,8 @@
     var allOn = GRID_STATUSES.every(function (s) { return state.filter.indexOf(s) !== -1; });
     var allTile = document.createElement("div");
     allTile.className = "status-tile all-tile" + (allOn ? " selected" : "");
-    allTile.style.setProperty("--tile-color", "var(--status-complete)");
-    allTile.style.setProperty("--tile-on", "var(--status-complete-on)");
+    allTile.style.setProperty("--tile-color", "var(--tile-neutral)");
+    allTile.style.setProperty("--tile-on", "var(--tile-neutral-on)");
     ["All or", "Nothing"].forEach(function (part, i) {
       if (i > 0) allTile.appendChild(document.createElement("br"));
       allTile.appendChild(document.createTextNode(part));
@@ -650,10 +903,11 @@
       return;
     }
 
-    var projectsToShow = state.projectFilter ? [state.projectFilter] : PROJECTS;
+    var projectsToShow = state.projectFilter ? [state.projectFilter] : visibleProjectNames();
     projectsToShow.forEach(function (project) {
+      if (isProjectHidden(project)) return;
       var projTasks = state.tasks.filter(function (t) { return t.project === project; });
-      var visibleStatuses = STATUS_ORDER.filter(function (s) {
+      var visibleStatuses = STATUS_KEYS.filter(function (s) {
         return state.filter.indexOf(s) !== -1 && projTasks.some(function (t) { return t.status === s; });
       });
       if (visibleStatuses.length === 0) return;
@@ -667,12 +921,19 @@
         var tasks = projTasks.filter(function (t) { return t.status === s; });
         var label = document.createElement("div");
         label.className = "status-label";
-        label.textContent = STATUS_LABELS[s];
-        label.style.setProperty("--label-color", "var(--status-" + s + ")");
+        label.textContent = statusLabel(s);
+        label.style.setProperty("--label-color", statusColor(s).bg);
         el.content.appendChild(label);
         tasks.forEach(function (t) { el.content.appendChild(renderCard(t)); });
       });
     });
+
+    if (el.content.children.length === 0 && state.projects.length > 0 && state.projects.every(function (p) { return p.hidden; })) {
+      var emptyHidden = document.createElement("div");
+      emptyHidden.className = "empty-state";
+      emptyHidden.textContent = "No projects visible — unhide one in Settings → Edit Projects.";
+      el.content.appendChild(emptyHidden);
+    }
   }
 
   function renderCard(task) {
@@ -685,8 +946,8 @@
     row.appendChild(deleteBg);
 
     var card = document.createElement("div");
-    card.className = "card" + (task.status === "complete" ? " complete" : "");
-    card.style.setProperty("--card-status", "var(--status-" + task.status + ")");
+    card.className = "card";
+    card.style.setProperty("--card-status", statusColor(task.status).bg);
     var title = document.createElement("span");
     title.className = "card-title";
     title.textContent = task.title;
@@ -732,7 +993,9 @@
 
   function renderTriage() {
     el.content.innerHTML = "";
-    var unassigned = state.tasks.filter(function (t) { return !t.project || !t.status; });
+    var unassigned = state.tasks.filter(function (t) {
+      return (!t.project || !t.status) && !isProjectHidden(t.project);
+    });
     if (unassigned.length === 0) {
       var empty = document.createElement("div");
       empty.className = "empty-state";
@@ -856,11 +1119,12 @@
     el.editProject.classList.toggle("placeholder", !project);
   }
   function renderEditStatusButton(status) {
-    el.editStatus.textContent = status ? STATUS_LABELS[status] : "Status";
+    el.editStatus.textContent = status ? statusLabel(status) : "Status";
     el.editStatus.classList.toggle("placeholder", !status);
     if (status) {
-      el.editStatus.style.setProperty("--sel-color", "var(--status-" + status + ")");
-      el.editStatus.style.setProperty("--sel-on", "var(--status-" + status + "-on)");
+      var color = statusColor(status);
+      el.editStatus.style.setProperty("--sel-color", color.bg);
+      el.editStatus.style.setProperty("--sel-on", color.on);
     } else {
       el.editStatus.style.removeProperty("--sel-color");
       el.editStatus.style.removeProperty("--sel-on");
@@ -873,8 +1137,8 @@
     state.editingTaskId = null;
   }
   // Project/status picks and title edits save immediately (live, not staged) —
-  // the sheet has no separate "confirm" action; Completed is a status
-  // shortcut, not a generic save.
+  // the sheet has no separate "confirm" action. Finishing a task is now a
+  // direct delete (swipe or the Delete confirm sheet), not a status.
   function commitTitleEdit() {
     if (!state.editingTaskId) return;
     var t = state.tasks.find(function (x) { return x.id === state.editingTaskId; });
@@ -902,8 +1166,118 @@
       closeEditSheet();
     }
   }
-  // ---------- Settings / GitHub setup ----------
-  function openSettings() {
+
+  // ---------- Settings home / sub-sheet navigation ----------
+  function showOnlySettingsSheet(target) {
+    SETTINGS_SHEETS.forEach(function (k) { el[k].hidden = (el[k] !== target); });
+  }
+  function openSettingsHome() {
+    el.backdrop.hidden = false;
+    showOnlySettingsSheet(el.settingsHomeSheet);
+  }
+  function backToSettingsHome() {
+    showOnlySettingsSheet(el.settingsHomeSheet);
+  }
+  function closeSettingsFlow() {
+    el.backdrop.hidden = true;
+    SETTINGS_SHEETS.forEach(function (k) { el[k].hidden = true; });
+  }
+
+  // ---------- Edit Projects ----------
+  var EYE_SVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+  var EYE_OFF_SVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a21.8 21.8 0 0 1 5.06-6.06M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 8 11 8a21.8 21.8 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+
+  function renderEditProjectsList() {
+    var list = document.getElementById("projList");
+    list.innerHTML = "";
+    state.projects.forEach(function (p, i) {
+      var row = document.createElement("div");
+      row.className = "proj-edit-row" + (p.hidden ? " hidden-project" : "");
+
+      var up = document.createElement("button");
+      up.className = "proj-move-btn";
+      up.textContent = "▲";
+      up.disabled = i === 0;
+      up.addEventListener("click", function () { moveProject(i, -1); });
+      row.appendChild(up);
+
+      var down = document.createElement("button");
+      down.className = "proj-move-btn";
+      down.textContent = "▼";
+      down.disabled = i === state.projects.length - 1;
+      down.addEventListener("click", function () { moveProject(i, 1); });
+      row.appendChild(down);
+
+      var input = document.createElement("input");
+      input.type = "text";
+      input.className = "proj-name-input";
+      input.value = p.name;
+      input.addEventListener("blur", function () { renameProject(i, input.value.trim()); });
+      input.addEventListener("keydown", function (e) { if (e.key === "Enter") input.blur(); });
+      row.appendChild(input);
+
+      var hideBtn = document.createElement("button");
+      hideBtn.className = "proj-hide-btn";
+      hideBtn.innerHTML = p.hidden ? EYE_OFF_SVG : EYE_SVG;
+      hideBtn.addEventListener("click", function () { toggleProjectHidden(i); });
+      row.appendChild(hideBtn);
+
+      list.appendChild(row);
+    });
+  }
+
+  // ---------- Edit Statuses ----------
+  var openSwatchKey = null;
+
+  function renderEditStatusesList() {
+    var list = document.getElementById("statusList");
+    list.innerHTML = "";
+    STATUS_KEYS.forEach(function (key) {
+      var meta = state.statusMeta[key];
+      var color = statusColor(key);
+
+      var row = document.createElement("div");
+      row.className = "status-edit-row";
+
+      var input = document.createElement("input");
+      input.type = "text";
+      input.className = "status-name-input";
+      input.value = meta.label;
+      input.addEventListener("blur", function () { renameStatus(key, input.value.trim()); });
+      input.addEventListener("keydown", function (e) { if (e.key === "Enter") input.blur(); });
+      row.appendChild(input);
+
+      var swatchBtn = document.createElement("button");
+      swatchBtn.className = "status-swatch-btn";
+      swatchBtn.style.setProperty("--sw-color", color.bg);
+      swatchBtn.addEventListener("click", function () {
+        openSwatchKey = openSwatchKey === key ? null : key;
+        renderEditStatusesList();
+      });
+      row.appendChild(swatchBtn);
+
+      list.appendChild(row);
+
+      if (openSwatchKey === key) {
+        var accordion = document.createElement("div");
+        accordion.className = "swatch-accordion";
+        PALETTE.forEach(function (sw, i) {
+          var opt = document.createElement("button");
+          opt.className = "swatch-option" + (i === meta.paletteIndex ? " selected" : "");
+          opt.style.setProperty("--sw-color", isDarkMode() ? sw.dark : sw.light);
+          opt.addEventListener("click", function () {
+            recolorStatus(key, i);
+            openSwatchKey = null;
+          });
+          accordion.appendChild(opt);
+        });
+        list.appendChild(accordion);
+      }
+    });
+  }
+
+  // ---------- Sync Setup (relocated, functionally unchanged) ----------
+  function populateSyncSetupFields() {
     var owner = document.getElementById("ghOwner");
     var repo = document.getElementById("ghRepo");
     var pat = document.getElementById("ghPat");
@@ -917,12 +1291,6 @@
       owner.value = ""; repo.value = ""; pat.value = "";
       note.textContent = "Not configured — data is stored on this device only.";
     }
-    el.backdrop.hidden = false;
-    el.settingsSheet.hidden = false;
-  }
-  function closeSettings() {
-    el.backdrop.hidden = true;
-    el.settingsSheet.hidden = true;
   }
 
   // ---------- Wiring ----------
@@ -938,7 +1306,7 @@
   el.editProject.addEventListener("click", function () {
     var t = state.tasks.find(function (x) { return x.id === state.editingTaskId; });
     el.editSheet.hidden = true;
-    openPicker("Project", PROJECTS, t ? t.project : null, null, function (val) {
+    openPicker("Project", visibleProjectNames(), t ? t.project : null, null, function (val) {
       commitEditField("project", val);
       renderEditProjectButton(val);
     }, true);
@@ -946,7 +1314,7 @@
   el.editStatus.addEventListener("click", function () {
     var t = state.tasks.find(function (x) { return x.id === state.editingTaskId; });
     el.editSheet.hidden = true;
-    openPicker("Status", STATUS_ORDER, t ? t.status : null, STATUS_LABELS, function (val) {
+    openPicker("Status", STATUS_KEYS, t ? t.status : null, statusLabelsMap(), function (val) {
       commitEditField("status", val);
       renderEditStatusButton(val);
       // Optimize and Get-Do are Ron's personal reflection/errand buckets —
@@ -968,7 +1336,7 @@
   });
 
   el.projectFilterBtn.addEventListener("click", function () {
-    openPicker("Project", PROJECTS, state.projectFilter, null, function (val) {
+    openPicker("Project", visibleProjectNames(), state.projectFilter, null, function (val) {
       state.projectFilter = val;
       saveProjectFilter();
       state.activeTab = "main";
@@ -982,9 +1350,36 @@
     render();
   });
 
-  document.getElementById("settingsBtn").addEventListener("click", openSettings);
-  document.getElementById("settingsClose").addEventListener("click", closeSettings);
-  document.getElementById("settingsSkip").addEventListener("click", closeSettings);
+  document.getElementById("settingsBtn").addEventListener("click", openSettingsHome);
+  document.getElementById("settingsHomeClose").addEventListener("click", closeSettingsFlow);
+  Array.prototype.forEach.call(document.querySelectorAll(".settings-row"), function (row) {
+    row.addEventListener("click", function () {
+      var target = row.getAttribute("data-target");
+      if (target === "print") {
+        showOnlySettingsSheet(el.printSheet);
+      } else if (target === "editProjects") {
+        renderEditProjectsList();
+        showOnlySettingsSheet(el.editProjectsSheet);
+      } else if (target === "editStatuses") {
+        openSwatchKey = null;
+        renderEditStatusesList();
+        showOnlySettingsSheet(el.editStatusesSheet);
+      } else if (target === "syncSetup") {
+        populateSyncSetupFields();
+        showOnlySettingsSheet(el.settingsSheet);
+      }
+    });
+  });
+  document.getElementById("printBack").addEventListener("click", backToSettingsHome);
+  document.getElementById("printGo").addEventListener("click", function () { window.print(); });
+  document.getElementById("editProjectsBack").addEventListener("click", backToSettingsHome);
+  document.getElementById("addProjectBtn").addEventListener("click", addProjectFromInput);
+  document.getElementById("addProjectInput").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") addProjectFromInput();
+  });
+  document.getElementById("editStatusesBack").addEventListener("click", backToSettingsHome);
+  document.getElementById("settingsClose").addEventListener("click", backToSettingsHome);
+  document.getElementById("settingsSkip").addEventListener("click", closeSettingsFlow);
   document.getElementById("settingsSave").addEventListener("click", function () {
     var owner = document.getElementById("ghOwner").value.trim();
     var repo = document.getElementById("ghRepo").value.trim();
@@ -994,7 +1389,7 @@
       localStorage.setItem(GH_CONFIG_KEY, JSON.stringify(state.gh));
       ghPull();
     }
-    closeSettings();
+    closeSettingsFlow();
   });
 
   document.getElementById("confirmDelete").addEventListener("click", function () {
@@ -1008,9 +1403,9 @@
   el.backdrop.addEventListener("click", function () {
     if (!el.pickerSheet.hidden) { closePicker(); return; }
     if (!el.confirmSheet.hidden) { cancelDeleteConfirm(); return; }
+    if (anySettingsSheetOpen()) { closeSettingsFlow(); return; }
     closeQuickAdd();
     closeEditSheet();
-    closeSettings();
   });
 
   // ---------- Orientation lock ----------
@@ -1038,10 +1433,15 @@
 
   // ---------- Init ----------
   loadLocal();
-  purgeOldComplete();
   render();
   applyOrientationLock();
   if (state.gh) ghPull();
+  if (window.matchMedia) {
+    // Status colors are computed in JS (not pure CSS media-query swapping)
+    // so a live OS theme change needs an explicit re-render to pick up the
+    // correct light/dark variant from the palette.
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", render);
+  }
 })();
 </script>
 </body>

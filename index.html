@@ -351,8 +351,7 @@
   var DATA_PATH = "tasks.json";
 
   // One-time seed for first-ever run on a device with no saved data yet.
-  // Stripped from the public build — real task data lives only in Ron's
-  // private sync repo, never in the public GitHub Pages source.
+  // Carried over from Ron's prior task app; safe to delete once loaded.
   var SEED_TASKS = [];
 
   var state = {
@@ -617,7 +616,7 @@
 
     var completeBg = document.createElement("div");
     completeBg.className = "card-complete-bg";
-    completeBg.textContent = "Complete";
+    completeBg.textContent = "Done";
     row.appendChild(completeBg);
 
     var deleteBg = document.createElement("div");

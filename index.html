@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Task List">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjoiVGFzayBMaXN0Iiwic2hvcnRfbmFtZSI6IlRhc2sgTGlzdCIsImRpc3BsYXkiOiJzdGFuZGFsb25lIiwiYmFja2dyb3VuZF9jb2xvciI6IiNmZmZmZmYiLCJ0aGVtZV9jb2xvciI6IiM0ZjZiZmYiLCJzdGFydF91cmwiOiIuIn0=">
+<link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjoiVGFzayBMaXN0Iiwic2hvcnRfbmFtZSI6IlRhc2sgTGlzdCIsImRpc3BsYXkiOiJzdGFuZGFsb25lIiwiYmFja2dyb3VuZF9jb2xvciI6IiNmZmZmZmYiLCJ0aGVtZV9jb2xvciI6IiM0ZjZiZmYiLCJzdGFydF91cmwiOiIuIiwib3JpZW50YXRpb24iOiJwb3J0cmFpdCJ9">
 <style>
   :root {
     --bg: #ffffff;
@@ -61,6 +61,14 @@
     height: 100dvh; height: 100vh;
     overflow: hidden;
   }
+  /* iOS has no orientation-lock API for home-screen web apps; this rotates
+     the page to counteract a physical landscape flip so it always reads as
+     portrait. Only engages when window.orientation exists (iOS/mobile). */
+  html.force-portrait {
+    position: fixed; top: 0; left: 0; overflow: hidden;
+    transform-origin: top left;
+  }
+  html.force-portrait #app { height: 100% !important; }
 
   /* Content */
   .content {
@@ -133,7 +141,7 @@
   .status-grid {
     flex: 0 0 auto;
     display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px;
-    padding: 8px 16px 20px;
+    padding: 20px 16px;
   }
   .status-tile {
     position: relative; height: 64px; min-width: 0;
@@ -982,10 +990,34 @@
     closeSettings();
   });
 
+  // ---------- Orientation lock ----------
+  // window.orientation only exists on iOS/mobile Safari, so this is a no-op
+  // on desktop. iOS provides no real lock API for home-screen web apps, so
+  // this counter-rotates the page on physical landscape flips instead.
+  function applyOrientationLock() {
+    if (typeof window.orientation === "undefined") return;
+    var root = document.documentElement;
+    var w = window.innerWidth, h = window.innerHeight;
+    if (w <= h) {
+      root.classList.remove("force-portrait");
+      root.style.width = ""; root.style.height = ""; root.style.transform = "";
+      return;
+    }
+    root.classList.add("force-portrait");
+    root.style.width = h + "px";
+    root.style.height = w + "px";
+    root.style.transform = window.orientation === 90 ?
+      "translateY(" + h + "px) rotate(-90deg)" :
+      "translateX(" + w + "px) rotate(90deg)";
+  }
+  window.addEventListener("resize", applyOrientationLock);
+  window.addEventListener("orientationchange", applyOrientationLock);
+
   // ---------- Init ----------
   loadLocal();
   purgeOldComplete();
   render();
+  applyOrientationLock();
   if (state.gh) ghPull();
 })();
 </script>

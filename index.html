@@ -21,7 +21,6 @@
     --border: #e3e3e6;
     --accent: #4f6bff;
     --red: #ff3b30;
-    --green: #16a34a;
     --status-priority: #d6006e;    --status-priority-on: #ffffff;
     --status-active: #84cc16;      --status-active-on: #1c1c1e;
     --status-waiting: #6b6b70;     --status-waiting-on: #ffffff;
@@ -41,7 +40,6 @@
       --border: #2c2c2e;
       --accent: #7b8fff;
       --red: #ff453a;
-      --green: #4ade80;
       --status-priority: #ff5cad;    --status-priority-on: #1c1c1e;
       --status-active: #a6e22e;      --status-active-on: #1c1c1e;
       --status-waiting: #98989d;     --status-waiting-on: #1c1c1e;
@@ -202,23 +200,6 @@
   }
   .picker-row:last-child { border-bottom: none; }
   .picker-row.selected { color: var(--accent); font-weight: 600; }
-  .edit-actions {
-    display: flex; gap: 8px;
-    margin-top: 24px;
-  }
-  .edit-action-col { flex: 1; min-width: 0; display: flex; }
-  .edit-action-btn {
-    display: flex; align-items: center; gap: 8px; padding: 4px 4px 4px 0;
-    border: none; background: none; cursor: pointer;
-    font-size: 15px; font-weight: 500; color: var(--text);
-  }
-  .edit-action-icon {
-    width: 22px; height: 22px; flex: 0 0 auto;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 13px; border: 1.5px solid;
-  }
-  .edit-delete .edit-action-icon { color: var(--red); border-color: var(--red); }
-  .edit-confirm .edit-action-icon { color: var(--green); border-color: var(--green); }
   .settings-sheet label {
     display: block; font-size: 13px; color: var(--text2); margin: 10px 0 4px;
   }
@@ -273,17 +254,13 @@
 
 <div class="sheet" id="editSheet" hidden style="max-height: 400px;">
   <div class="sheet-header">
-    <button id="editClose">&#10005;</button>
     <span></span>
+    <button id="editClose">&#10005;</button>
   </div>
   <input type="text" id="editTitle">
   <div class="edit-selector-row">
     <div class="edit-select" id="editProject"></div>
     <div class="edit-select" id="editStatus"></div>
-  </div>
-  <div class="edit-actions">
-    <div class="edit-action-col"><button class="edit-action-btn edit-delete" id="editDelete"><span class="edit-action-icon">&#10005;</span>Delete Task</button></div>
-    <div class="edit-action-col"><button class="edit-action-btn edit-confirm" id="editConfirm"><span class="edit-action-icon">&#10003;</span>Task Complete</button></div>
   </div>
 </div>
 
@@ -799,13 +776,6 @@
       closeEditSheet();
     }
   }
-  function markEditingComplete() {
-    if (!state.editingTaskId) return;
-    updateTask(state.editingTaskId, { status: "complete" });
-    closeEditSheet();
-    render();
-  }
-
   // ---------- Settings / GitHub setup ----------
   function openSettings() {
     var owner = document.getElementById("ghOwner");
@@ -837,7 +807,6 @@
   });
 
   document.getElementById("editClose").addEventListener("click", closeEditSheet);
-  document.getElementById("editConfirm").addEventListener("click", markEditingComplete);
   el.editTitle.addEventListener("blur", commitTitleEdit);
   el.editProject.addEventListener("click", function () {
     var t = state.tasks.find(function (x) { return x.id === state.editingTaskId; });
@@ -862,12 +831,6 @@
     }, true);
   });
   document.getElementById("pickerClose").addEventListener("click", closePicker);
-  document.getElementById("editDelete").addEventListener("click", function () {
-    if (!state.editingTaskId) return;
-    deleteTask(state.editingTaskId);
-    closeEditSheet();
-    render();
-  });
 
   el.tabMain.addEventListener("click", function () { state.activeTab = "main"; render(); });
   el.tabTriage.addEventListener("click", function () { state.activeTab = "triage"; render(); });

@@ -386,9 +386,9 @@
 
 <div class="sheet" id="settingsHomeSheet" hidden style="max-height: 280px;">
   <div class="sheet-header">
-    <button id="settingsHomeClose">&#10005;</button>
-    <span class="sheet-title">Settings</span>
     <span class="sheet-header-spacer"></span>
+    <span class="sheet-title">Settings</span>
+    <button id="settingsHomeClose">&#10005;</button>
   </div>
   <div class="settings-row" data-target="print">Print<span class="chevron">&#8250;</span></div>
   <div class="settings-row" data-target="editProjects">Edit Projects<span class="chevron">&#8250;</span></div>
@@ -505,7 +505,7 @@
 
   // One-time seed for first-ever run on a device with no saved data yet.
   // Carried over from Ron's prior task app; safe to delete once loaded.
-  var SEED_TASKS = [];
+var SEED_TASKS = [];
 
   var state = {
     tasks: [],

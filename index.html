@@ -756,6 +756,15 @@
     card.addEventListener("click", function () { openEditSheet(task.id); });
     row.appendChild(card);
 
+    var delBtn = document.createElement("button");
+    delBtn.className = "delete-hover";
+    delBtn.textContent = "×";
+    delBtn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      requestDelete(task.id, null);
+    });
+    row.appendChild(delBtn);
+
     attachSwipeToDelete(row, card, task.id);
     return row;
   }

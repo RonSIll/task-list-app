@@ -100,14 +100,7 @@
     padding-right: 20px; font-size: 14px; font-weight: 500;
     transition: background 0.1s, color 0.1s;
   }
-  .card-complete-bg {
-    position: absolute; inset: 0; background: transparent; color: transparent;
-    display: flex; align-items: center; justify-content: flex-start;
-    padding-left: 20px; font-size: 14px; font-weight: 500;
-    transition: background 0.1s, color 0.1s;
-  }
   .card-row.swiping-left .card-delete-bg { background: var(--red); color: #fff; }
-  .card-row.swiping-right .card-complete-bg { background: var(--green); color: #fff; }
 
   /* Triage card */
   .triage-card {
@@ -606,11 +599,6 @@
     var row = document.createElement("div");
     row.className = "card-row";
 
-    var completeBg = document.createElement("div");
-    completeBg.className = "card-complete-bg";
-    completeBg.textContent = "Done";
-    row.appendChild(completeBg);
-
     var deleteBg = document.createElement("div");
     deleteBg.className = "card-delete-bg";
     deleteBg.textContent = "Delete";
@@ -638,18 +626,14 @@
     card.addEventListener("touchmove", function (e) {
       if (!dragging) return;
       currentX = e.touches[0].clientX - startX;
-      card.style.transform = "translateX(" + Math.max(Math.min(currentX, 80), -80) + "px)";
+      if (currentX < 0) card.style.transform = "translateX(" + Math.max(currentX, -80) + "px)";
       row.classList.toggle("swiping-left", currentX < 0);
-      row.classList.toggle("swiping-right", currentX > 0);
     }, { passive: true });
     card.addEventListener("touchend", function () {
       dragging = false;
-      row.classList.remove("swiping-left", "swiping-right");
+      row.classList.remove("swiping-left");
       if (currentX < -60) {
         deleteTask(taskId);
-        render();
-      } else if (currentX > 60) {
-        updateTask(taskId, { status: "complete" });
         render();
       } else {
         card.style.transform = "";

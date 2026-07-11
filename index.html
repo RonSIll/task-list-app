@@ -123,6 +123,13 @@
     color: var(--text3); font-size: 15px; padding: 60px 20px; text-align: center;
   }
 
+  /* Project filter row */
+  .project-row {
+    flex: 0 0 auto;
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 3px;
+    padding: 8px 16px 0;
+  }
+
   /* Status + Triage grid */
   .status-grid {
     flex: 0 0 auto;
@@ -238,6 +245,10 @@
 <body>
 <div id="app">
   <main class="content" id="content"><div class="content-inner" id="contentInner"></div></main>
+  <div class="project-row" id="projectRow">
+    <button class="nav-tab" id="projectFilterBtn">Project</button>
+    <button class="nav-tab" id="allProjectsBtn">All Projects</button>
+  </div>
   <div class="status-grid" id="statusGrid"></div>
   <div class="bottom-icons">
     <button class="icon-btn" id="settingsBtn" aria-label="Sync settings" title="Sync settings">
@@ -326,6 +337,7 @@
   var COMPLETE_RETENTION_DAYS = 60;
   var DATA_KEY = "taskListData";
   var FILTER_KEY = "taskListFilter";
+  var PROJECT_FILTER_KEY = "taskListProjectFilter";
   var GH_CONFIG_KEY = "taskListGithubConfig";
   var DATA_PATH = "tasks.json";
 
@@ -336,6 +348,7 @@
   var state = {
     tasks: [],
     filter: STATUS_ORDER.filter(function (s) { return s !== "complete"; }),
+    projectFilter: null, // null = All Projects; otherwise a single project name
     activeTab: "main",
     editingTaskId: null,
     gh: null // { owner, repo, pat, sha }
@@ -362,6 +375,10 @@
       if (f) state.filter = JSON.parse(f);
     } catch (e) {}
     try {
+      var pf = localStorage.getItem(PROJECT_FILTER_KEY);
+      if (pf) state.projectFilter = JSON.parse(pf);
+    } catch (e) {}
+    try {
       var gh = localStorage.getItem(GH_CONFIG_KEY);
       state.gh = gh ? JSON.parse(gh) : null;
     } catch (e) { state.gh = null; }
@@ -373,6 +390,10 @@
 
   function saveFilter() {
     localStorage.setItem(FILTER_KEY, JSON.stringify(state.filter));
+  }
+
+  function saveProjectFilter() {
+    localStorage.setItem(PROJECT_FILTER_KEY, JSON.stringify(state.projectFilter));
   }
 
   // ---------- GitHub sync ----------
@@ -492,15 +513,24 @@
     pickerList: document.getElementById("pickerList"),
     tabMain: document.getElementById("tabMain"),
     tabTriage: document.getElementById("tabTriage"),
-    triageBadge: document.getElementById("triageBadge")
+    triageBadge: document.getElementById("triageBadge"),
+    projectFilterBtn: document.getElementById("projectFilterBtn"),
+    allProjectsBtn: document.getElementById("allProjectsBtn")
   };
 
   var GRID_STATUSES = STATUS_ORDER.filter(function (s) { return s !== "complete"; });
 
   function render() {
+    renderProjectRow();
     renderStatusGrid();
     renderNavTabs();
     if (state.activeTab === "main") renderMain(); else renderTriage();
+  }
+
+  function renderProjectRow() {
+    el.projectFilterBtn.textContent = state.projectFilter || "Project";
+    el.projectFilterBtn.classList.toggle("active", !!state.projectFilter);
+    el.allProjectsBtn.classList.toggle("active", !state.projectFilter);
   }
 
   function renderNavTabs() {
@@ -565,7 +595,8 @@
       return;
     }
 
-    PROJECTS.forEach(function (project) {
+    var projectsToShow = state.projectFilter ? [state.projectFilter] : PROJECTS;
+    projectsToShow.forEach(function (project) {
       var projTasks = state.tasks.filter(function (t) { return t.project === project; });
       var visibleStatuses = STATUS_ORDER.filter(function (s) {
         return state.filter.indexOf(s) !== -1 && projTasks.some(function (t) { return t.status === s; });
@@ -868,6 +899,21 @@
 
   el.tabMain.addEventListener("click", function () { state.activeTab = "main"; render(); });
   el.tabTriage.addEventListener("click", function () { state.activeTab = "triage"; render(); });
+
+  el.projectFilterBtn.addEventListener("click", function () {
+    openPicker("Project", PROJECTS, state.projectFilter, null, function (val) {
+      state.projectFilter = val;
+      saveProjectFilter();
+      state.activeTab = "main";
+      render();
+    }, false);
+  });
+  el.allProjectsBtn.addEventListener("click", function () {
+    state.projectFilter = null;
+    saveProjectFilter();
+    state.activeTab = "main";
+    render();
+  });
 
   document.getElementById("settingsBtn").addEventListener("click", openSettings);
   document.getElementById("settingsSkip").addEventListener("click", closeSettings);

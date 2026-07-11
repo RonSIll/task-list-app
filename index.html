@@ -106,8 +106,9 @@
 
   /* Triage card */
   .triage-card {
-    background: var(--bg2); border-radius: 0; padding: 14px 16px; margin-bottom: 6px;
-    cursor: pointer;
+    background: var(--bg2); border-radius: 0; padding: 14px 16px;
+    cursor: pointer; position: relative; z-index: 1;
+    transition: transform 0.2s;
   }
   .triage-title { font-size: 15px; font-weight: 400; color: var(--text); line-height: 1.35; }
   .empty-state {
@@ -641,6 +642,14 @@
   }
 
   function renderTriageCard(task) {
+    var row = document.createElement("div");
+    row.className = "card-row";
+
+    var deleteBg = document.createElement("div");
+    deleteBg.className = "card-delete-bg";
+    deleteBg.textContent = "Delete";
+    row.appendChild(deleteBg);
+
     var card = document.createElement("div");
     card.className = "triage-card";
 
@@ -650,8 +659,10 @@
     card.appendChild(title);
 
     card.addEventListener("click", function () { openEditSheet(task.id); });
+    row.appendChild(card);
 
-    return card;
+    attachSwipeToDelete(row, card, task.id);
+    return row;
   }
 
   // ---------- Picker overlay (project/status selection) ----------

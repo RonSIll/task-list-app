@@ -54,6 +54,8 @@
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body {
     margin: 0; padding: 0; height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
     background: var(--bg); color: var(--text);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   }
@@ -373,10 +375,7 @@
 
   // One-time seed for first-ever run on a device with no saved data yet.
   // Carried over from Ron's prior task app; safe to delete once loaded.
-  var SEED_TASKS = [
-  ].map(function (t) {
-    return { id: uid(), title: t.title, project: t.project, status: t.status, completedAt: null };
-  });
+  var SEED_TASKS = [];
 
   var state = {
     tasks: [],

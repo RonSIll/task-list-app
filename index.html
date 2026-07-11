@@ -234,6 +234,9 @@
   #settingsSave { background: var(--accent); color: #fff; }
   #settingsSkip { background: var(--bg2); color: var(--text2); }
   .sync-note { font-size: 12px; color: var(--text3); margin-top: 10px; }
+  .confirm-text { font-size: 17px; font-weight: 500; text-align: center; padding: 12px 4px 4px; }
+  #confirmDelete { background: var(--red); color: #fff; }
+  #confirmKeep { background: var(--bg2); color: var(--text2); }
   [hidden] { display: none !important; }
   .toast {
     position: fixed; left: 50%; bottom: calc(240px + env(safe-area-inset-bottom)); transform: translateX(-50%);
@@ -291,6 +294,14 @@
 <div class="sheet picker-sheet" id="pickerSheet" hidden>
   <div class="sheet-header"><span class="picker-title" id="pickerTitle"></span><button id="pickerClose">&#10005;</button></div>
   <div class="picker-list" id="pickerList"></div>
+</div>
+
+<div class="sheet" id="confirmSheet" hidden style="max-height: 160px;">
+  <div class="confirm-text">Delete Task?</div>
+  <div class="settings-actions">
+    <button id="confirmDelete">Delete</button>
+    <button id="confirmKeep">Keep</button>
+  </div>
 </div>
 
 <div class="sheet settings-sheet" id="settingsSheet" hidden>
@@ -515,8 +526,31 @@
     tabTriage: document.getElementById("tabTriage"),
     triageBadge: document.getElementById("triageBadge"),
     projectFilterBtn: document.getElementById("projectFilterBtn"),
-    allProjectsBtn: document.getElementById("allProjectsBtn")
+    allProjectsBtn: document.getElementById("allProjectsBtn"),
+    confirmSheet: document.getElementById("confirmSheet")
   };
+
+  // ---------- Delete confirmation ----------
+  var pendingDeleteId = null;
+  var pendingDeleteCancel = null;
+
+  function requestDelete(taskId, onCancel) {
+    pendingDeleteId = taskId;
+    pendingDeleteCancel = onCancel || null;
+    el.backdrop.hidden = false;
+    el.confirmSheet.hidden = false;
+  }
+  function closeDeleteConfirm() {
+    el.confirmSheet.hidden = true;
+    el.backdrop.hidden = true;
+    pendingDeleteId = null;
+    pendingDeleteCancel = null;
+  }
+  function cancelDeleteConfirm() {
+    var cancel = pendingDeleteCancel;
+    closeDeleteConfirm();
+    if (cancel) cancel();
+  }
 
   var GRID_STATUSES = STATUS_ORDER.filter(function (s) { return s !== "complete"; });
 
@@ -644,8 +678,7 @@
     delBtn.textContent = "×";
     delBtn.addEventListener("click", function (e) {
       e.stopPropagation();
-      deleteTask(task.id);
-      render();
+      requestDelete(task.id, null);
     });
     row.appendChild(delBtn);
 
@@ -668,8 +701,7 @@
       dragging = false;
       row.classList.remove("swiping-left");
       if (currentX < -60) {
-        deleteTask(taskId);
-        render();
+        requestDelete(taskId, function () { card.style.transform = ""; });
       } else {
         card.style.transform = "";
       }
@@ -934,8 +966,16 @@
     closeSettings();
   });
 
+  document.getElementById("confirmDelete").addEventListener("click", function () {
+    var id = pendingDeleteId;
+    closeDeleteConfirm();
+    if (id) { deleteTask(id); render(); }
+  });
+  document.getElementById("confirmKeep").addEventListener("click", cancelDeleteConfirm);
+
   el.backdrop.addEventListener("click", function () {
     if (!el.pickerSheet.hidden) { closePicker(); return; }
+    if (!el.confirmSheet.hidden) { cancelDeleteConfirm(); return; }
     closeQuickAdd();
     closeEditSheet();
     closeSettings();

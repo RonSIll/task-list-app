@@ -178,8 +178,8 @@
   .sheet-header button {
     border: none; background: none; font-size: 16px; cursor: pointer; padding: 6px;
   }
-  #quickAddSheet .sheet-header button { color: var(--accent); font-weight: 500; }
-  #editClose, #pickerClose { color: var(--text2); }
+  #quickAddSubmit { color: var(--accent); font-weight: 500; }
+  #editClose, #pickerClose, #quickAddClose { color: var(--text2); }
   .sheet input[type="text"] {
     width: 100%; border: none; padding: 16px 4px; font-size: 17px;
     background: transparent; color: var(--text); outline: none;
@@ -252,7 +252,7 @@
 <div class="toast" id="toast" hidden></div>
 
 <div class="sheet" id="quickAddSheet" hidden style="max-height: 140px;">
-  <div class="sheet-header"><span></span><button id="quickAddSubmit">Add</button></div>
+  <div class="sheet-header"><button id="quickAddClose">&#10005;</button><button id="quickAddSubmit">Add</button></div>
   <input type="text" id="quickAddInput" placeholder="Type a task…">
 </div>
 
@@ -805,6 +805,7 @@
 
   // ---------- Wiring ----------
   document.getElementById("fabBtn").addEventListener("click", openQuickAdd);
+  document.getElementById("quickAddClose").addEventListener("click", closeQuickAdd);
   document.getElementById("quickAddSubmit").addEventListener("click", submitQuickAdd);
   el.quickAddInput.addEventListener("keydown", function (e) {
     if (e.key === "Enter") submitQuickAdd();

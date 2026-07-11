@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Task List</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Task List">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjoiVGFzayBMaXN0Iiwic2hvcnRfbmFtZSI6IlRhc2sgTGlzdCIsImRpc3BsYXkiOiJzdGFuZGFsb25lIiwiYmFja2dyb3VuZF9jb2xvciI6IiNmZmZmZmYiLCJ0aGVtZV9jb2xvciI6IiM0ZjZiZmYiLCJzdGFydF91cmwiOiIuIn0=">
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg2: #f4f4f6;
+    --text: #1c1c1e;
+    --text2: #6b6b70;
+    --text3: #a0a0a5;
+    --border: #e3e3e6;
+    --accent: #4f6bff;
+    --red: #ff3b30;
+    --green: #16a34a;
+    --status-priority: #d6006e;    --status-priority-on: #ffffff;
+    --status-active: #84cc16;      --status-active-on: #1c1c1e;
+    --status-waiting: #6b6b70;     --status-waiting-on: #ffffff;
+    --status-scheduled: #b8860b;   --status-scheduled-on: #ffffff;
+    --status-optimize: #7c3aed;    --status-optimize-on: #ffffff;
+    --status-getdo: #0d9488;       --status-getdo-on: #ffffff;
+    --status-someday: #3b82c4;     --status-someday-on: #ffffff;
+    --status-complete: #1c1c1e;    --status-complete-on: #ffffff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #000000;
+      --bg2: #1c1c1e;
+      --text: #f5f5f7;
+      --text2: #98989d;
+      --text3: #6b6b70;
+      --border: #2c2c2e;
+      --accent: #7b8fff;
+      --red: #ff453a;
+      --green: #4ade80;
+      --status-priority: #ff5cad;    --status-priority-on: #1c1c1e;
+      --status-active: #a6e22e;      --status-active-on: #1c1c1e;
+      --status-waiting: #98989d;     --status-waiting-on: #1c1c1e;
+      --status-scheduled: #e0b400;   --status-scheduled-on: #1c1c1e;
+      --status-optimize: #c4a6f5;    --status-optimize-on: #1c1c1e;
+      --status-getdo: #2dd4bf;       --status-getdo-on: #1c1c1e;
+      --status-someday: #7dc4f0;     --status-someday-on: #1c1c1e;
+      --status-complete: #5a5a5e;    --status-complete-on: #f5f5f7;
+    }
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  #app {
+    display: flex; flex-direction: column;
+    height: 100dvh; height: 100vh;
+    overflow: hidden;
+  }
+
+  /* Content */
+  .content {
+    flex: 1 1 auto; overflow-y: auto;
+    padding: calc(8px + env(safe-area-inset-top)) 16px 8px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .project-header {
+    font-size: 20px; font-weight: 600; color: var(--text);
+    padding: 16px 4px 4px; letter-spacing: -0.2px;
+  }
+  .project-header:first-child { padding-top: 4px; }
+  .status-label {
+    font-size: 12px; font-weight: 500; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--label-color, var(--text2)); padding: 12px 4px 6px;
+  }
+
+  /* Task card */
+  .card-row { position: relative; overflow: hidden; border-radius: 0; margin-bottom: 6px; }
+  .card {
+    background: var(--bg2); border-radius: 0; padding: 14px 16px 14px 22px;
+    font-size: 15px; font-weight: 400; color: var(--text); line-height: 1.35;
+    cursor: pointer; position: relative; z-index: 1;
+    transition: transform 0.2s;
+  }
+  .card::before {
+    content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+    background: var(--card-status, transparent);
+  }
+  .card.complete { opacity: 0.55; }
+  .card.complete .card-title { text-decoration: line-through; color: var(--text2); }
+  .card-delete-bg {
+    position: absolute; inset: 0; background: transparent; color: transparent;
+    display: flex; align-items: center; justify-content: flex-end;
+    padding-right: 20px; font-size: 14px; font-weight: 500;
+    transition: background 0.1s, color 0.1s;
+  }
+  .card-row.swiping .card-delete-bg { background: var(--red); color: #fff; }
+  .card-row .delete-hover {
+    display: none; position: absolute; top: 50%; right: 14px; transform: translateY(-50%);
+    background: none; border: none; color: var(--text3); cursor: pointer; font-size: 16px; z-index: 2;
+  }
+  @media (hover: hover) {
+    .card-row:hover .delete-hover { display: block; }
+    .card-row:hover .delete-hover:hover { color: var(--red); }
+  }
+
+  /* Triage card */
+  .triage-card {
+    background: var(--bg2); border-radius: 0; padding: 14px 16px; margin-bottom: 6px;
+    cursor: pointer;
+  }
+  .triage-title { font-size: 15px; font-weight: 400; color: var(--text); line-height: 1.35; }
+  .empty-state {
+    color: var(--text3); font-size: 15px; padding: 60px 20px; text-align: center;
+  }
+
+  /* Status + Triage grid */
+  .status-grid {
+    flex: 0 0 auto;
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px;
+    padding: 8px 16px 20px;
+  }
+  .status-tile {
+    position: relative; height: 64px; min-width: 0;
+    display: flex; align-items: center; justify-content: center;
+    text-align: center; padding: 4px;
+    font-size: 13px; font-weight: 500; line-height: 1.15;
+    border: 1px solid var(--tile-color, var(--border));
+    color: var(--tile-color, var(--text2));
+    background: var(--bg);
+    cursor: pointer;
+  }
+  .status-tile.selected {
+    background: var(--tile-color, var(--accent));
+    color: var(--tile-on, #fff);
+  }
+
+  /* Bottom row (settings, List/Triage tabs, quick add) — same 4-column grid as .status-grid */
+  .bottom-icons {
+    flex: 0 0 auto;
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px;
+    padding: 0 16px calc(16px + env(safe-area-inset-bottom));
+  }
+  .icon-btn {
+    height: 52px; border-radius: 0; padding: 0;
+    border: 1px solid var(--border); background: var(--bg); color: var(--text3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; cursor: pointer;
+  }
+  .icon-btn.primary { border-color: var(--accent); background: var(--accent); color: #fff; }
+  .nav-tabs {
+    grid-column: span 2; display: flex; height: 52px;
+    border: 1px solid var(--border); border-radius: 0; overflow: hidden;
+  }
+  .nav-tab {
+    position: relative; flex: 1; display: flex; align-items: center; justify-content: center;
+    padding: 0 12px; text-align: center;
+    border: none; background: var(--bg); color: var(--text2);
+    font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
+    cursor: pointer;
+  }
+  .nav-tab.active { background: var(--accent); color: #fff; }
+  .tab-badge {
+    position: absolute; top: 2px; right: 4px;
+    background: var(--accent); color: #fff; border: 2px solid var(--bg);
+    font-size: 10px; font-weight: 600; border-radius: 0; padding: 0 5px; line-height: 1.4;
+  }
+
+  /* Backdrop + sheets */
+  .backdrop {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 20;
+  }
+  .sheet {
+    position: fixed; left: 0; right: 0; bottom: calc(223px + env(safe-area-inset-bottom)); z-index: 21;
+    background: var(--bg); border-radius: 0;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+    padding: 16px 16px 20px;
+  }
+  .sheet-header {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;
+  }
+  .sheet-header button {
+    border: none; background: none; font-size: 16px; cursor: pointer; padding: 6px;
+  }
+  #quickAddSheet .sheet-header button { color: var(--accent); font-weight: 500; }
+  #editClose, #pickerClose { color: var(--text2); }
+  .sheet input[type="text"] {
+    width: 100%; border: none; padding: 16px 4px; font-size: 17px;
+    background: transparent; color: var(--text); outline: none;
+  }
+  #editTitle { font-size: 17px; font-weight: 500; padding: 8px 4px 16px; }
+  .edit-selector-row { display: flex; gap: 8px; margin-top: 4px; }
+  .edit-select {
+    flex: 1; min-width: 0; border: none; padding: 20px 10px; font-size: 15px; font-weight: 500;
+    text-align: center; cursor: pointer;
+    text-overflow: ellipsis; white-space: nowrap; overflow: hidden;
+    background: var(--sel-color, var(--border)); color: var(--sel-on, var(--text));
+  }
+  .edit-select.placeholder { color: var(--text2); }
+
+  /* Picker overlay (project/status selection) */
+  .picker-sheet { max-height: 400px; display: flex; flex-direction: column; }
+  .picker-title { font-weight: 600; font-size: 15px; }
+  .picker-list { overflow-y: auto; margin: 0 -16px; padding: 0 16px; }
+  .picker-row {
+    padding: 16px 8px; font-size: 15px; color: var(--text); background: var(--bg);
+    border-bottom: 0.5px solid var(--border); cursor: pointer;
+  }
+  .picker-row:last-child { border-bottom: none; }
+  .picker-row.selected { color: var(--accent); font-weight: 600; }
+  .edit-actions {
+    display: flex; gap: 8px;
+    margin-top: 24px;
+  }
+  .edit-action-col { flex: 1; min-width: 0; display: flex; }
+  .edit-action-btn {
+    display: flex; align-items: center; gap: 8px; padding: 4px 4px 4px 0;
+    border: none; background: none; cursor: pointer;
+    font-size: 15px; font-weight: 500; color: var(--text);
+  }
+  .edit-action-icon {
+    width: 22px; height: 22px; flex: 0 0 auto;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; border: 1.5px solid;
+  }
+  .edit-delete .edit-action-icon { color: var(--red); border-color: var(--red); }
+  .edit-confirm .edit-action-icon { color: var(--green); border-color: var(--green); }
+  .settings-sheet label {
+    display: block; font-size: 13px; color: var(--text2); margin: 10px 0 4px;
+  }
+  .settings-sheet input[type="text"], .settings-sheet input[type="password"] {
+    width: 100%; border: 1px solid var(--border); border-radius: 0;
+    padding: 10px; font-size: 14px; background: var(--bg2); color: var(--text);
+  }
+  .settings-actions { display: flex; gap: 8px; margin-top: 16px; }
+  .settings-actions button {
+    flex: 1; padding: 10px; border-radius: 0; border: none; font-size: 14px; font-weight: 500; cursor: pointer;
+  }
+  #settingsSave { background: var(--accent); color: #fff; }
+  #settingsSkip { background: var(--bg2); color: var(--text2); }
+  .sync-note { font-size: 12px; color: var(--text3); margin-top: 10px; }
+  [hidden] { display: none !important; }
+  .toast {
+    position: fixed; left: 50%; bottom: calc(240px + env(safe-area-inset-bottom)); transform: translateX(-50%);
+    background: var(--text); color: var(--bg); border-radius: 0;
+    padding: 8px 14px; font-size: 13px; z-index: 30;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <main class="content" id="content"></main>
+  <div class="status-grid" id="statusGrid"></div>
+  <div class="bottom-icons">
+    <button class="icon-btn" id="settingsBtn" aria-label="Sync settings" title="Sync settings">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82A1.65 1.65 0 0 0 3 13.09H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+    </button>
+    <div class="nav-tabs">
+      <button class="nav-tab active" data-tab="main" id="tabMain">List</button>
+      <button class="nav-tab" data-tab="triage" id="tabTriage">Triage<span class="tab-badge" id="triageBadge" hidden>0</span></button>
+    </div>
+    <button class="icon-btn primary" id="fabBtn" aria-label="Add task">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+        <line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<div class="backdrop" id="backdrop" hidden></div>
+<div class="toast" id="toast" hidden></div>
+
+<div class="sheet" id="quickAddSheet" hidden style="max-height: 140px;">
+  <div class="sheet-header"><span></span><button id="quickAddSubmit">Add</button></div>
+  <input type="text" id="quickAddInput" placeholder="Type a task…">
+</div>
+
+<div class="sheet" id="editSheet" hidden style="max-height: 400px;">
+  <div class="sheet-header">
+    <button id="editClose">&#10005;</button>
+    <span></span>
+  </div>
+  <input type="text" id="editTitle">
+  <div class="edit-selector-row">
+    <div class="edit-select" id="editProject"></div>
+    <div class="edit-select" id="editStatus"></div>
+  </div>
+  <div class="edit-actions">
+    <div class="edit-action-col"><button class="edit-action-btn edit-delete" id="editDelete"><span class="edit-action-icon">&#10005;</span>Delete Task</button></div>
+    <div class="edit-action-col"><button class="edit-action-btn edit-confirm" id="editConfirm"><span class="edit-action-icon">&#10003;</span>Task Complete</button></div>
+  </div>
+</div>
+
+<div class="sheet picker-sheet" id="pickerSheet" hidden>
+  <div class="sheet-header"><span class="picker-title" id="pickerTitle"></span><button id="pickerClose">&#10005;</button></div>
+  <div class="picker-list" id="pickerList"></div>
+</div>
+
+<div class="sheet settings-sheet" id="settingsSheet" hidden>
+  <div class="sheet-header"><span style="font-weight:500;">Sync Setup</span><span></span></div>
+  <label>GitHub owner</label>
+  <input type="text" id="ghOwner" placeholder="e.g. RonSill">
+  <label>Repo name</label>
+  <input type="text" id="ghRepo" placeholder="e.g. Task-List">
+  <label>Personal access token</label>
+  <input type="password" id="ghPat" placeholder="github_pat_...">
+  <div class="settings-actions">
+    <button id="settingsSkip">Use local only</button>
+    <button id="settingsSave">Save &amp; Sync</button>
+  </div>
+  <div class="sync-note" id="syncNote"></div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---------- Data model ----------
+  var STATUS_ORDER = ["priority", "active", "waiting", "scheduled", "optimize", "getdo", "someday", "complete"];
+  var STATUS_LABELS = {
+    priority: "Priority", active: "Active", waiting: "Waiting",
+    scheduled: "Scheduled", optimize: "Optimize", getdo: "Get-Do",
+    someday: "Someday/Maybe", complete: "Complete"
+  };
+
+  // Fixed project list — set up once. Edit this array directly to change it.
+  var PROJECTS = [
+    "904 Ron", "905 Kelly", "906 The Gray Samaritan", "907 Cornerstone",
+    "908 Travel Personal", "910 Housing", "911 Computing", "912 Family",
+    "913 Friends", "914 Health & Fitness", "916 Medical", "918 Veterans",
+    "919 KellyVend", "920 Personal Finances", "921 Personal Legal",
+    "922 Art Projects", "926 Real Estate", "928 Automobiles",
+    "930 Personal Devt", "932 Knowledge", "940 Claude Code"
+  ];
+
+  var COMPLETE_RETENTION_DAYS = 60;
+  var DATA_KEY = "taskListData";
+  var FILTER_KEY = "taskListFilter";
+  var GH_CONFIG_KEY = "taskListGithubConfig";
+  var DATA_PATH = "tasks.json";
+
+  // Seed data intentionally omitted from the public-repo build (Pages copy).
+  // Real seed list lives only in the private working copy at src/task-list.html.
+  var SEED_TASKS = [];
+
+  var state = {
+    tasks: [],
+    filter: STATUS_ORDER.filter(function (s) { return s !== "complete"; }),
+    activeTab: "main",
+    editingTaskId: null,
+    gh: null // { owner, repo, pat, sha }
+  };
+
+  function uid() {
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    return "t-" + Date.now() + "-" + Math.random().toString(16).slice(2);
+  }
+
+  // ---------- Persistence (local) ----------
+  function loadLocal() {
+    try {
+      var raw = localStorage.getItem(DATA_KEY);
+      if (raw) {
+        state.tasks = JSON.parse(raw).tasks || [];
+      } else {
+        state.tasks = SEED_TASKS;
+        saveLocal();
+      }
+    } catch (e) { state.tasks = []; }
+    try {
+      var f = localStorage.getItem(FILTER_KEY);
+      if (f) state.filter = JSON.parse(f);
+    } catch (e) {}
+    try {
+      var gh = localStorage.getItem(GH_CONFIG_KEY);
+      state.gh = gh ? JSON.parse(gh) : null;
+    } catch (e) { state.gh = null; }
+  }
+
+  function saveLocal() {
+    localStorage.setItem(DATA_KEY, JSON.stringify({ tasks: state.tasks }));
+  }
+
+  function saveFilter() {
+    localStorage.setItem(FILTER_KEY, JSON.stringify(state.filter));
+  }
+
+  // ---------- GitHub sync ----------
+  // Auto-sync: pulls on load, pushes (debounced) after every change.
+  // Falls back to local-only silently if not configured or on network error.
+  var pushTimer = null;
+
+  function ghApiUrl() {
+    return "https://api.github.com/repos/" + state.gh.owner + "/" + state.gh.repo + "/contents/" + DATA_PATH;
+  }
+
+  function b64encode(str) {
+    return btoa(unescape(encodeURIComponent(str)));
+  }
+  function b64decode(str) {
+    return decodeURIComponent(escape(atob(str)));
+  }
+
+  function ghPull() {
+    if (!state.gh) return;
+    fetch(ghApiUrl(), {
+      headers: { Authorization: "token " + state.gh.pat }
+    }).then(function (res) {
+      if (!res.ok) throw new Error("pull failed");
+      return res.json();
+    }).then(function (json) {
+      state.gh.sha = json.sha;
+      var remote = JSON.parse(b64decode(json.content));
+      state.tasks = remote.tasks || [];
+      saveLocal();
+      purgeOldComplete();
+      render();
+    }).catch(function () {
+      // Network or auth error — silently continue on local data.
+    });
+  }
+
+  function ghPushNow() {
+    if (!state.gh) return;
+    var body = {
+      message: "Task List sync " + new Date().toISOString(),
+      content: b64encode(JSON.stringify({ tasks: state.tasks })),
+      sha: state.gh.sha || undefined
+    };
+    fetch(ghApiUrl(), {
+      method: "PUT",
+      headers: { Authorization: "token " + state.gh.pat, "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    }).then(function (res) {
+      if (!res.ok) throw new Error("push failed");
+      return res.json();
+    }).then(function (json) {
+      state.gh.sha = json.content.sha;
+      localStorage.setItem(GH_CONFIG_KEY, JSON.stringify(state.gh));
+    }).catch(function () {
+      // Last-write-wins, no warning — a failed push just means local stays
+      // ahead until the next successful sync attempt.
+    });
+  }
+
+  function ghPushDebounced() {
+    if (!state.gh) return;
+    clearTimeout(pushTimer);
+    pushTimer = setTimeout(ghPushNow, 500);
+  }
+
+  // ---------- Auto-delete ----------
+  function purgeOldComplete() {
+    var cutoff = Date.now() - COMPLETE_RETENTION_DAYS * 24 * 60 * 60 * 1000;
+    var before = state.tasks.length;
+    state.tasks = state.tasks.filter(function (t) {
+      return !(t.status === "complete" && t.completedAt && t.completedAt < cutoff);
+    });
+    if (state.tasks.length !== before) saveLocal();
+  }
+
+  // ---------- Mutations ----------
+  function persistAndSync() {
+    saveLocal();
+    ghPushDebounced();
+  }
+
+  function addTask(title) {
+    state.tasks.push({ id: uid(), title: title, project: null, status: null, completedAt: null });
+    persistAndSync();
+  }
+
+  function updateTask(id, patch) {
+    var t = state.tasks.find(function (x) { return x.id === id; });
+    if (!t) return;
+    var wasComplete = t.status === "complete";
+    Object.assign(t, patch);
+    if (t.status === "complete" && !wasComplete) t.completedAt = Date.now();
+    if (t.status !== "complete") t.completedAt = null;
+    persistAndSync();
+  }
+
+  function deleteTask(id) {
+    state.tasks = state.tasks.filter(function (x) { return x.id !== id; });
+    persistAndSync();
+  }
+
+  // ---------- Rendering ----------
+  var el = {
+    statusGrid: document.getElementById("statusGrid"),
+    content: document.getElementById("content"),
+    backdrop: document.getElementById("backdrop"),
+    quickAddSheet: document.getElementById("quickAddSheet"),
+    quickAddInput: document.getElementById("quickAddInput"),
+    editSheet: document.getElementById("editSheet"),
+    editTitle: document.getElementById("editTitle"),
+    editProject: document.getElementById("editProject"),
+    editStatus: document.getElementById("editStatus"),
+    settingsSheet: document.getElementById("settingsSheet"),
+    pickerSheet: document.getElementById("pickerSheet"),
+    pickerTitle: document.getElementById("pickerTitle"),
+    pickerList: document.getElementById("pickerList"),
+    tabMain: document.getElementById("tabMain"),
+    tabTriage: document.getElementById("tabTriage"),
+    triageBadge: document.getElementById("triageBadge")
+  };
+
+  var GRID_STATUSES = STATUS_ORDER.filter(function (s) { return s !== "complete"; });
+
+  function render() {
+    renderStatusGrid();
+    renderNavTabs();
+    if (state.activeTab === "main") renderMain(); else renderTriage();
+  }
+
+  function renderNavTabs() {
+    el.tabMain.classList.toggle("active", state.activeTab === "main");
+    el.tabTriage.classList.toggle("active", state.activeTab === "triage");
+    var unassignedCount = state.tasks.filter(function (t) { return !t.project || !t.status; }).length;
+    el.triageBadge.textContent = String(unassignedCount);
+    el.triageBadge.hidden = unassignedCount === 0;
+  }
+
+  function renderStatusGrid() {
+    el.statusGrid.innerHTML = "";
+    GRID_STATUSES.forEach(function (s) {
+      var tile = document.createElement("div");
+      tile.className = "status-tile" + (state.filter.indexOf(s) !== -1 ? " selected" : "");
+      STATUS_LABELS[s].split("/").forEach(function (part, i) {
+        if (i > 0) tile.appendChild(document.createElement("br"));
+        tile.appendChild(document.createTextNode(part));
+      });
+      tile.style.setProperty("--tile-color", "var(--status-" + s + ")");
+      tile.style.setProperty("--tile-on", "var(--status-" + s + "-on)");
+      tile.addEventListener("click", function () {
+        var idx = state.filter.indexOf(s);
+        if (idx !== -1) {
+          state.filter.splice(idx, 1);
+        } else {
+          state.filter.push(s);
+        }
+        saveFilter();
+        state.activeTab = "main";
+        render();
+      });
+      el.statusGrid.appendChild(tile);
+    });
+
+    var allOn = GRID_STATUSES.every(function (s) { return state.filter.indexOf(s) !== -1; });
+    var allTile = document.createElement("div");
+    allTile.className = "status-tile all-tile" + (allOn ? " selected" : "");
+    allTile.style.setProperty("--tile-color", "var(--status-complete)");
+    allTile.style.setProperty("--tile-on", "var(--status-complete-on)");
+    ["All or", "Nothing"].forEach(function (part, i) {
+      if (i > 0) allTile.appendChild(document.createElement("br"));
+      allTile.appendChild(document.createTextNode(part));
+    });
+    allTile.addEventListener("click", function () {
+      state.filter = allOn ? [] : GRID_STATUSES.slice();
+      saveFilter();
+      state.activeTab = "main";
+      render();
+    });
+    el.statusGrid.appendChild(allTile);
+  }
+
+  function renderMain() {
+    el.content.innerHTML = "";
+
+    if (state.filter.length === 0) {
+      var empty = document.createElement("div");
+      empty.className = "empty-state";
+      empty.textContent = "No statuses selected.";
+      el.content.appendChild(empty);
+      return;
+    }
+
+    PROJECTS.forEach(function (project) {
+      var projTasks = state.tasks.filter(function (t) { return t.project === project; });
+      var visibleStatuses = STATUS_ORDER.filter(function (s) {
+        return state.filter.indexOf(s) !== -1 && projTasks.some(function (t) { return t.status === s; });
+      });
+      if (visibleStatuses.length === 0) return;
+
+      var header = document.createElement("div");
+      header.className = "project-header";
+      header.textContent = project;
+      el.content.appendChild(header);
+
+      visibleStatuses.forEach(function (s) {
+        var tasks = projTasks.filter(function (t) { return t.status === s; });
+        var label = document.createElement("div");
+        label.className = "status-label";
+        label.textContent = STATUS_LABELS[s];
+        label.style.setProperty("--label-color", "var(--status-" + s + ")");
+        el.content.appendChild(label);
+        tasks.forEach(function (t) { el.content.appendChild(renderCard(t)); });
+      });
+    });
+  }
+
+  function renderCard(task) {
+    var row = document.createElement("div");
+    row.className = "card-row";
+
+    var deleteBg = document.createElement("div");
+    deleteBg.className = "card-delete-bg";
+    deleteBg.textContent = "Delete";
+    row.appendChild(deleteBg);
+
+    var card = document.createElement("div");
+    card.className = "card" + (task.status === "complete" ? " complete" : "");
+    card.style.setProperty("--card-status", "var(--status-" + task.status + ")");
+    var title = document.createElement("span");
+    title.className = "card-title";
+    title.textContent = task.title;
+    card.appendChild(title);
+    card.addEventListener("click", function () { openEditSheet(task.id); });
+    row.appendChild(card);
+
+    var delBtn = document.createElement("button");
+    delBtn.className = "delete-hover";
+    delBtn.textContent = "×";
+    delBtn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      deleteTask(task.id);
+      render();
+    });
+    row.appendChild(delBtn);
+
+    attachSwipeToDelete(row, card, task.id);
+    return row;
+  }
+
+  function attachSwipeToDelete(row, card, taskId) {
+    var startX = null, currentX = 0, dragging = false;
+    card.addEventListener("touchstart", function (e) {
+      startX = e.touches[0].clientX; dragging = true;
+      row.classList.add("swiping");
+    }, { passive: true });
+    card.addEventListener("touchmove", function (e) {
+      if (!dragging) return;
+      currentX = e.touches[0].clientX - startX;
+      if (currentX < 0) card.style.transform = "translateX(" + Math.max(currentX, -80) + "px)";
+    }, { passive: true });
+    card.addEventListener("touchend", function () {
+      dragging = false;
+      row.classList.remove("swiping");
+      if (currentX < -60) {
+        deleteTask(taskId);
+        render();
+      } else {
+        card.style.transform = "";
+      }
+      currentX = 0;
+    });
+  }
+
+  function renderTriage() {
+    el.content.innerHTML = "";
+    var unassigned = state.tasks.filter(function (t) { return !t.project || !t.status; });
+    if (unassigned.length === 0) {
+      var empty = document.createElement("div");
+      empty.className = "empty-state";
+      empty.textContent = "Nothing to triage.";
+      el.content.appendChild(empty);
+      return;
+    }
+    unassigned.forEach(function (t) { el.content.appendChild(renderTriageCard(t)); });
+  }
+
+  function renderTriageCard(task) {
+    var card = document.createElement("div");
+    card.className = "triage-card";
+
+    var title = document.createElement("div");
+    title.className = "triage-title";
+    title.textContent = task.title;
+    card.appendChild(title);
+
+    card.addEventListener("click", function () { openEditSheet(task.id); });
+
+    return card;
+  }
+
+  // ---------- Picker overlay (project/status selection) ----------
+  var pickerRestoreEditSheet = false;
+
+  function openPicker(title, options, currentValue, labelMap, onSelect, restoreEditSheet) {
+    pickerRestoreEditSheet = !!restoreEditSheet;
+    el.pickerTitle.textContent = title;
+    el.pickerList.innerHTML = "";
+    options.forEach(function (o) {
+      var row = document.createElement("div");
+      row.className = "picker-row" + (o === currentValue ? " selected" : "");
+      row.textContent = labelMap ? labelMap[o] : o;
+      row.addEventListener("click", function () {
+        onSelect(o);
+        closePicker();
+      });
+      el.pickerList.appendChild(row);
+    });
+    el.backdrop.hidden = false;
+    el.pickerSheet.hidden = false;
+  }
+
+  function closePicker() {
+    el.pickerSheet.hidden = true;
+    // onSelect (run by the caller before this) may have already closed the
+    // edit sheet entirely (e.g. a Triage task just got fully assigned) —
+    // only restore it if it's still the thing being edited.
+    if (pickerRestoreEditSheet && state.editingTaskId) {
+      el.editSheet.hidden = false;
+    } else {
+      el.backdrop.hidden = true;
+    }
+    pickerRestoreEditSheet = false;
+  }
+
+  // ---------- Quick add ----------
+  function openQuickAdd() {
+    el.backdrop.hidden = false;
+    el.quickAddSheet.hidden = false;
+    el.quickAddInput.value = "";
+    el.quickAddInput.focus();
+  }
+  function closeQuickAdd() {
+    el.backdrop.hidden = true;
+    el.quickAddSheet.hidden = true;
+  }
+  function submitQuickAdd() {
+    var v = el.quickAddInput.value.trim();
+    closeQuickAdd();
+    if (v) {
+      addTask(v);
+      render();
+      showToast("Added to Triage");
+    }
+  }
+
+  var toastTimer = null;
+  function showToast(message) {
+    var toast = document.getElementById("toast");
+    toast.textContent = message;
+    toast.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toast.hidden = true; }, 1500);
+  }
+
+  // ---------- Edit sheet ----------
+  function openEditSheet(taskId) {
+    var t = state.tasks.find(function (x) { return x.id === taskId; });
+    if (!t) return;
+    state.editingTaskId = taskId;
+    el.editTitle.value = t.title;
+    renderEditProjectButton(t.project);
+    renderEditStatusButton(t.status);
+    el.backdrop.hidden = false;
+    el.editSheet.hidden = false;
+  }
+  function renderEditProjectButton(project) {
+    el.editProject.textContent = project || "Project";
+    el.editProject.classList.toggle("placeholder", !project);
+  }
+  function renderEditStatusButton(status) {
+    el.editStatus.textContent = status ? STATUS_LABELS[status] : "Status";
+    el.editStatus.classList.toggle("placeholder", !status);
+    if (status) {
+      el.editStatus.style.setProperty("--sel-color", "var(--status-" + status + ")");
+      el.editStatus.style.setProperty("--sel-on", "var(--status-" + status + "-on)");
+    } else {
+      el.editStatus.style.removeProperty("--sel-color");
+      el.editStatus.style.removeProperty("--sel-on");
+    }
+  }
+  function closeEditSheet() {
+    commitTitleEdit();
+    el.backdrop.hidden = true;
+    el.editSheet.hidden = true;
+    state.editingTaskId = null;
+  }
+  // Project/status picks and title edits save immediately (live, not staged) —
+  // the sheet has no separate "confirm" action; Completed is a status
+  // shortcut, not a generic save.
+  function commitTitleEdit() {
+    if (!state.editingTaskId) return;
+    var t = state.tasks.find(function (x) { return x.id === state.editingTaskId; });
+    if (!t) return;
+    var v = el.editTitle.value.trim() || "Untitled";
+    if (t.title !== v) {
+      updateTask(state.editingTaskId, { title: v });
+      render();
+    }
+  }
+  function commitEditField(field, value) {
+    if (!state.editingTaskId) return;
+    var t = state.tasks.find(function (x) { return x.id === state.editingTaskId; });
+    if (!t) return;
+    var wasIncomplete = !t.project || !t.status;
+    var patch = {};
+    patch[field] = value;
+    updateTask(state.editingTaskId, patch);
+    render();
+    // A task straight out of Triage closes itself once both fields are set —
+    // assignment is the completion action, same as the old inline pickers.
+    // A fully-assigned task being re-edited never hits this (both were
+    // already set before the change), so ordinary edits stay open.
+    if (wasIncomplete && t.project && t.status) {
+      closeEditSheet();
+    }
+  }
+  function markEditingComplete() {
+    if (!state.editingTaskId) return;
+    updateTask(state.editingTaskId, { status: "complete" });
+    closeEditSheet();
+    render();
+  }
+
+  // ---------- Settings / GitHub setup ----------
+  function openSettings() {
+    var owner = document.getElementById("ghOwner");
+    var repo = document.getElementById("ghRepo");
+    var pat = document.getElementById("ghPat");
+    var note = document.getElementById("syncNote");
+    if (state.gh) {
+      owner.value = state.gh.owner || "";
+      repo.value = state.gh.repo || "";
+      pat.value = state.gh.pat || "";
+      note.textContent = "Currently syncing to " + state.gh.owner + "/" + state.gh.repo + ".";
+    } else {
+      owner.value = ""; repo.value = ""; pat.value = "";
+      note.textContent = "Not configured — data is stored on this device only.";
+    }
+    el.backdrop.hidden = false;
+    el.settingsSheet.hidden = false;
+  }
+  function closeSettings() {
+    el.backdrop.hidden = true;
+    el.settingsSheet.hidden = true;
+  }
+
+  // ---------- Wiring ----------
+  document.getElementById("fabBtn").addEventListener("click", openQuickAdd);
+  document.getElementById("quickAddSubmit").addEventListener("click", submitQuickAdd);
+  el.quickAddInput.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") submitQuickAdd();
+  });
+
+  document.getElementById("editClose").addEventListener("click", closeEditSheet);
+  document.getElementById("editConfirm").addEventListener("click", markEditingComplete);
+  el.editTitle.addEventListener("blur", commitTitleEdit);
+  el.editProject.addEventListener("click", function () {
+    var t = state.tasks.find(function (x) { return x.id === state.editingTaskId; });
+    el.editSheet.hidden = true;
+    openPicker("Project", PROJECTS, t ? t.project : null, null, function (val) {
+      commitEditField("project", val);
+      renderEditProjectButton(val);
+    }, true);
+  });
+  el.editStatus.addEventListener("click", function () {
+    var t = state.tasks.find(function (x) { return x.id === state.editingTaskId; });
+    el.editSheet.hidden = true;
+    openPicker("Status", STATUS_ORDER, t ? t.status : null, STATUS_LABELS, function (val) {
+      commitEditField("status", val);
+      renderEditStatusButton(val);
+    }, true);
+  });
+  document.getElementById("pickerClose").addEventListener("click", closePicker);
+  document.getElementById("editDelete").addEventListener("click", function () {
+    if (!state.editingTaskId) return;
+    deleteTask(state.editingTaskId);
+    closeEditSheet();
+    render();
+  });
+
+  el.tabMain.addEventListener("click", function () { state.activeTab = "main"; render(); });
+  el.tabTriage.addEventListener("click", function () { state.activeTab = "triage"; render(); });
+
+  document.getElementById("settingsBtn").addEventListener("click", openSettings);
+  document.getElementById("settingsSkip").addEventListener("click", closeSettings);
+  document.getElementById("settingsSave").addEventListener("click", function () {
+    var owner = document.getElementById("ghOwner").value.trim();
+    var repo = document.getElementById("ghRepo").value.trim();
+    var pat = document.getElementById("ghPat").value.trim();
+    if (owner && repo && pat) {
+      state.gh = { owner: owner, repo: repo, pat: pat, sha: null };
+      localStorage.setItem(GH_CONFIG_KEY, JSON.stringify(state.gh));
+      ghPull();
+    }
+    closeSettings();
+  });
+
+  el.backdrop.addEventListener("click", function () {
+    if (!el.pickerSheet.hidden) { closePicker(); return; }
+    closeQuickAdd();
+    closeEditSheet();
+    closeSettings();
+  });
+
+  // ---------- Init ----------
+  loadLocal();
+  purgeOldComplete();
+  render();
+  if (state.gh) ghPull();
+})();
+</script>
+</body>
+</html>

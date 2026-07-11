@@ -202,7 +202,7 @@
   .sheet-header button {
     border: none; background: none; font-size: 16px; cursor: pointer; padding: 6px;
   }
-  #editClose, #pickerClose, #quickAddClose { color: var(--text2); }
+  #editClose, #pickerClose, #quickAddClose, #settingsClose { color: var(--text2); }
   .sheet input[type="text"] {
     width: 100%; border: none; padding: 16px 4px; font-size: 17px;
     background: transparent; color: var(--text); outline: none;
@@ -320,7 +320,7 @@
 </div>
 
 <div class="sheet settings-sheet" id="settingsSheet" hidden>
-  <div class="sheet-header"><span style="font-weight:500;">Sync Setup</span><span></span></div>
+  <div class="sheet-header"><span style="font-weight:500;">Sync Setup</span><button id="settingsClose">&#10005;</button></div>
   <label>GitHub owner</label>
   <input type="text" id="ghOwner" placeholder="e.g. RonSill">
   <label>Repo name</label>
@@ -977,6 +977,7 @@
   });
 
   document.getElementById("settingsBtn").addEventListener("click", openSettings);
+  document.getElementById("settingsClose").addEventListener("click", closeSettings);
   document.getElementById("settingsSkip").addEventListener("click", closeSettings);
   document.getElementById("settingsSave").addEventListener("click", function () {
     var owner = document.getElementById("ghOwner").value.trim();

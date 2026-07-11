@@ -202,7 +202,7 @@
   .sheet-header button {
     border: none; background: none; font-size: 16px; cursor: pointer; padding: 6px;
   }
-  #editClose, #pickerClose, #quickAddClose, #settingsClose { color: var(--text2); }
+  #editClose, #pickerClose, #quickAddClose, #settingsClose, #confirmClose { color: var(--text2); }
   .sheet input[type="text"] {
     width: 100%; border: none; padding: 16px 4px; font-size: 17px;
     background: transparent; color: var(--text); outline: none;
@@ -242,7 +242,7 @@
   #settingsSave { background: var(--accent); color: #fff; }
   #settingsSkip { background: var(--bg2); color: var(--text2); }
   .sync-note { font-size: 12px; color: var(--text3); margin-top: 10px; }
-  .confirm-text { font-size: 17px; font-weight: 500; text-align: center; padding: 12px 4px 4px; }
+  .confirm-text { font-size: 17px; font-weight: 500; padding: 8px 4px 16px; }
   #confirmDelete { background: var(--red); color: #fff; border: 1px solid var(--red); }
   #confirmKeep { background: var(--bg2); color: var(--text2); border: 1px solid var(--border); }
   [hidden] { display: none !important; }
@@ -310,7 +310,11 @@
   <div class="picker-list" id="pickerList"></div>
 </div>
 
-<div class="sheet" id="confirmSheet" hidden style="max-height: 200px;">
+<div class="sheet" id="confirmSheet" hidden style="max-height: 220px;">
+  <div class="sheet-header">
+    <span></span>
+    <button id="confirmClose">&#10005;</button>
+  </div>
   <div class="confirm-text">Delete Task?</div>
   <div class="edit-selector-row">
     <button class="edit-select" id="confirmDelete">Delete</button>
@@ -996,6 +1000,7 @@
     if (id) { deleteTask(id); render(); }
   });
   document.getElementById("confirmKeep").addEventListener("click", cancelDeleteConfirm);
+  document.getElementById("confirmClose").addEventListener("click", cancelDeleteConfirm);
 
   el.backdrop.addEventListener("click", function () {
     if (!el.pickerSheet.hidden) { closePicker(); return; }

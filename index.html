@@ -202,11 +202,6 @@
     border: none; background: none; font-size: 16px; cursor: pointer; padding: 6px;
   }
   #editClose, #pickerClose, #quickAddClose { color: var(--text2); }
-  .quickadd-actions { display: flex; justify-content: flex-end; margin-top: 12px; }
-  #quickAddSubmit {
-    border: 1px solid var(--border); background: var(--bg); color: var(--text);
-    padding: 10px 24px; font-size: 15px; font-weight: 500; cursor: pointer;
-  }
   .sheet input[type="text"] {
     width: 100%; border: none; padding: 16px 4px; font-size: 17px;
     background: transparent; color: var(--text); outline: none;
@@ -293,8 +288,8 @@
     <button id="quickAddClose">&#10005;</button>
   </div>
   <input type="text" id="quickAddInput" placeholder="Type a task…">
-  <div class="quickadd-actions">
-    <button id="quickAddSubmit">Add</button>
+  <div class="edit-selector-row">
+    <button class="edit-select" id="quickAddSubmit">Add</button>
   </div>
 </div>
 

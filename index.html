@@ -1246,6 +1246,11 @@
   }
   document.addEventListener("keydown", function (e) {
     if (e.ctrlKey || e.metaKey || e.altKey) return;
+    // Some browser extensions (password managers, form-fillers, text
+    // expanders) dispatch synthetic keydown events into the page without a
+    // populated key property — e.key.length below would throw and abort the
+    // whole handler for that event. Treat "no key" as "not ours to handle".
+    if (!e.key) return;
     if (e.key === "Escape") {
       if (!el.backdrop.hidden) {
         el.backdrop.click();

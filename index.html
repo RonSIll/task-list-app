@@ -292,11 +292,6 @@
   .swatch-option.selected { border-color: var(--text); }
 
   [hidden] { display: none !important; }
-  .toast {
-    position: fixed; left: 50%; bottom: calc(240px + env(safe-area-inset-bottom)); transform: translateX(-50%);
-    background: var(--text); color: var(--bg); border-radius: 0;
-    padding: 8px 14px; font-size: 13px; z-index: 30;
-  }
 
   @media print {
     .project-row, .status-grid, .bottom-icons, .backdrop, .sheet { display: none !important; }
@@ -335,7 +330,6 @@
 </div>
 
 <div class="backdrop" id="backdrop" hidden></div>
-<div class="toast" id="toast" hidden></div>
 
 <div class="sheet" id="quickAddSheet" hidden style="max-height: 200px;">
   <div class="sheet-header">
@@ -1071,17 +1065,7 @@ var SEED_TASKS = [];
     if (v) {
       addTask(v);
       render();
-      showToast("Added to Triage");
     }
-  }
-
-  var toastTimer = null;
-  function showToast(message) {
-    var toast = document.getElementById("toast");
-    toast.textContent = message;
-    toast.hidden = false;
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(function () { toast.hidden = true; }, 1500);
   }
 
   // ---------- Edit sheet ----------

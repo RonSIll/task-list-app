@@ -1251,10 +1251,15 @@
         el.backdrop.click();
         // A real mouse click on the backdrop blurs whatever text field was
         // focused as a side effect; el.backdrop.click() is synthetic and
-        // skips that, so a field left focused (now hidden) would silently
-        // eat every shortcut afterward via the isTypingTarget guard below.
-        if (document.activeElement && document.activeElement !== document.body) {
-          document.activeElement.blur();
+        // skips that, so a field left behind focused (now hidden) would
+        // silently eat every shortcut afterward via the isTypingTarget guard
+        // below. But some close paths (e.g. closePicker returning to the
+        // edit sheet) deliberately refocus something useful and visible —
+        // only blur if what's still focused is actually inside a now-hidden
+        // sheet, not just unconditionally after every close.
+        var stillFocused = document.activeElement;
+        if (stillFocused && stillFocused !== document.body && stillFocused.closest("[hidden]")) {
+          stillFocused.blur();
         }
       } else if (listSelectedId) {
         // No sheet open — Escape deselects the arrow-key-highlighted task.

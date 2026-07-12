@@ -1256,6 +1256,9 @@
         if (document.activeElement && document.activeElement !== document.body) {
           document.activeElement.blur();
         }
+      } else if (listSelectedId) {
+        // No sheet open — Escape deselects the arrow-key-highlighted task.
+        setListSelection(null);
       }
       return;
     }

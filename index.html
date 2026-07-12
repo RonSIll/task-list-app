@@ -482,6 +482,40 @@
   // One-time seed for first-ever run on a device with no saved data yet.
   // Carried over from Ron's prior task app; safe to delete once loaded.
   var SEED_TASKS = [];
+
+  var state = {
+    tasks: [],
+    projects: [],
+    statusMeta: {},
+    filter: STATUS_KEYS.slice(),
+    projectFilter: null, // null = All Projects; otherwise a single project name
+    activeTab: "main",
+    editingTaskId: null,
+    gh: null // { owner, repo, pat, sha }
+  };
+
+  function uid() {
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    return "t-" + Date.now() + "-" + Math.random().toString(16).slice(2);
+  }
+
+  function defaultProjectsState() {
+    return DEFAULT_PROJECTS.map(function (name) { return { name: name, hidden: false }; });
+  }
+  function defaultStatusMetaState() {
+    var m = {};
+    STATUS_KEYS.forEach(function (k) {
+      m[k] = { label: DEFAULT_STATUS_META[k].label, paletteIndex: DEFAULT_STATUS_META[k].paletteIndex };
+    });
+    return m;
+  }
+
+  // ---------- Color helpers ----------
+  function isDarkMode() {
+    return !!(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  }
+  function statusColor(key) {
+    var meta = state.statusMeta[key];
     var sw = PALETTE[meta.paletteIndex];
     return isDarkMode() ? { bg: sw.dark, on: sw.onDark } : { bg: sw.light, on: sw.onLight };
   }

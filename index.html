@@ -1280,10 +1280,13 @@
     if (!el.backdrop.hidden) return; // any other sheet is already open — don't stack another
 
     // List navigation (Main + Triage): up/down move the selection, Enter
-    // opens the selected task — same edit sheet a tap/click opens.
+    // opens the selected task — same edit sheet a tap/click opens. Delete
+    // requests deletion of the selected task — same confirm sheet the
+    // desktop hover-delete "×" opens, not an instant delete.
     if (e.key === "ArrowDown") { e.preventDefault(); moveListSelection(1); return; }
     if (e.key === "ArrowUp") { e.preventDefault(); moveListSelection(-1); return; }
     if (e.key === "Enter" && listSelectedId) { e.preventDefault(); openSelectedFromList(); return; }
+    if (e.key === "Delete" && listSelectedId) { e.preventDefault(); requestDelete(listSelectedId, null); return; }
 
     var key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
     // preventDefault before acting: n/l move focus into a text field as part

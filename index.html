@@ -1319,12 +1319,18 @@
     if (key === "t") { e.preventDefault(); el.tabTriage.click(); return; }
     if (key === "l") { e.preventDefault(); jumpToFullList(); return; }
     if (key === "p") { e.preventDefault(); triggerPrint(); return; }
+    // "a" and 1-7 toggle a tile on/off; a key held even slightly longer than
+    // a quick tap fires a second (repeat=true) keydown before the keyup, so
+    // without this guard a marginally-held key toggles twice and silently
+    // cancels itself out — reads as "worked every other time".
     if (key === "a") {
+      if (e.repeat) { e.preventDefault(); return; }
       var allTile = el.statusGrid.querySelector(".all-tile");
       if (allTile) { e.preventDefault(); allTile.click(); }
       return;
     }
     if (key >= "1" && key <= "7") {
+      if (e.repeat) { e.preventDefault(); return; }
       var idx = Number(key) - 1;
       if (el.statusGrid.children[idx]) { e.preventDefault(); el.statusGrid.children[idx].click(); }
     }

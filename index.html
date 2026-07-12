@@ -1297,6 +1297,11 @@
     if (key === "t") { e.preventDefault(); el.tabTriage.click(); return; }
     if (key === "l") { e.preventDefault(); jumpToFullList(); return; }
     if (key === "p") { e.preventDefault(); triggerPrint(); return; }
+    if (key === "a") {
+      var allTile = el.statusGrid.querySelector(".all-tile");
+      if (allTile) { e.preventDefault(); allTile.click(); }
+      return;
+    }
     if (key >= "1" && key <= "7") {
       var idx = Number(key) - 1;
       if (el.statusGrid.children[idx]) { e.preventDefault(); el.statusGrid.children[idx].click(); }

@@ -815,7 +815,9 @@
     triageBadge: document.getElementById("triageBadge"),
     projectFilterBtn: document.getElementById("projectFilterBtn"),
     allProjectsBtn: document.getElementById("allProjectsBtn"),
-    confirmSheet: document.getElementById("confirmSheet")
+    confirmSheet: document.getElementById("confirmSheet"),
+    confirmDelete: document.getElementById("confirmDelete"),
+    confirmKeep: document.getElementById("confirmKeep")
   };
 
   var SETTINGS_SHEETS = ["settingsHomeSheet", "editProjectsSheet", "editStatusesSheet", "settingsSheet"];
@@ -832,6 +834,7 @@
     pendingDeleteCancel = onCancel || null;
     el.backdrop.hidden = false;
     el.confirmSheet.hidden = false;
+    el.confirmDelete.focus();
   }
   function closeDeleteConfirm() {
     el.confirmSheet.hidden = true;
@@ -1275,6 +1278,17 @@
       if (onSelectBtn && e.key === "ArrowRight") { e.preventDefault(); el.editStatus.focus(); return; }
       if (onSelectBtn && e.key === "Enter") { e.preventDefault(); document.activeElement.click(); return; }
       return; // no other shortcuts while the edit sheet is open
+    }
+
+    // Delete-confirm sheet open: left/right move focus between Delete and
+    // Keep. Enter needs no explicit handling here — both are real <button>
+    // elements, so the browser's native Enter-activates-focused-button
+    // behavior fires on its own as long as we don't preventDefault it.
+    if (!el.confirmSheet.hidden) {
+      var onConfirmBtn = document.activeElement === el.confirmDelete || document.activeElement === el.confirmKeep;
+      if (onConfirmBtn && e.key === "ArrowLeft") { e.preventDefault(); el.confirmDelete.focus(); return; }
+      if (onConfirmBtn && e.key === "ArrowRight") { e.preventDefault(); el.confirmKeep.focus(); return; }
+      return; // no other shortcuts while the confirm sheet is open
     }
 
     if (!el.backdrop.hidden) return; // any other sheet is already open — don't stack another

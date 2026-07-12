@@ -190,7 +190,7 @@
     border: none; background: none; font-size: 16px; cursor: pointer; padding: 6px;
   }
   #editClose, #pickerClose, #quickAddClose, #settingsClose, #confirmClose,
-  #settingsHomeClose, #printBack, #editProjectsBack, #editStatusesBack { color: var(--text2); }
+  #settingsHomeClose, #editProjectsBack, #editStatusesBack { color: var(--text2); }
   .sheet-title { font-size: 15px; font-weight: 600; }
   .sheet-header-spacer { width: 28px; display: inline-block; }
   .sheet input[type="text"] {
@@ -244,13 +244,6 @@
   }
   .settings-row:last-child { border-bottom: none; }
   .settings-row .chevron { color: var(--text3); font-size: 16px; }
-
-  /* Print sub-sheet */
-  .print-sheet-body { display: flex; align-items: center; justify-content: center; padding: 40px 16px; }
-  .print-btn {
-    background: var(--accent); color: #fff; border: none; border-radius: 0; padding: 0;
-    padding: 14px 24px; font-size: 16px; font-weight: 600; cursor: pointer;
-  }
 
   /* Edit Projects sub-sheet */
   .proj-list { overflow-y: auto; max-height: 300px; margin: 0 -16px; padding: 0 16px; }
@@ -390,21 +383,10 @@
     <span class="sheet-title">Settings</span>
     <button id="settingsHomeClose">&#10005;</button>
   </div>
-  <div class="settings-row" data-target="print">Print<span class="chevron">&#8250;</span></div>
+  <div class="settings-row" data-target="print">Print</div>
   <div class="settings-row" data-target="editProjects">Edit Projects<span class="chevron">&#8250;</span></div>
   <div class="settings-row" data-target="editStatuses">Edit Statuses<span class="chevron">&#8250;</span></div>
   <div class="settings-row" data-target="syncSetup">Sync Setup<span class="chevron">&#8250;</span></div>
-</div>
-
-<div class="sheet" id="printSheet" hidden style="max-height: 160px;">
-  <div class="sheet-header">
-    <button id="printBack">&#8249;</button>
-    <span class="sheet-title">Print</span>
-    <span class="sheet-header-spacer"></span>
-  </div>
-  <div class="print-sheet-body">
-    <button class="print-btn" id="printGo">Print</button>
-  </div>
 </div>
 
 <div class="sheet" id="editProjectsSheet" hidden style="max-height: 460px;">
@@ -782,7 +764,6 @@ var SEED_TASKS = [];
     editStatus: document.getElementById("editStatus"),
     settingsSheet: document.getElementById("settingsSheet"),
     settingsHomeSheet: document.getElementById("settingsHomeSheet"),
-    printSheet: document.getElementById("printSheet"),
     editProjectsSheet: document.getElementById("editProjectsSheet"),
     editStatusesSheet: document.getElementById("editStatusesSheet"),
     pickerSheet: document.getElementById("pickerSheet"),
@@ -796,7 +777,7 @@ var SEED_TASKS = [];
     confirmSheet: document.getElementById("confirmSheet")
   };
 
-  var SETTINGS_SHEETS = ["settingsHomeSheet", "printSheet", "editProjectsSheet", "editStatusesSheet", "settingsSheet"];
+  var SETTINGS_SHEETS = ["settingsHomeSheet", "editProjectsSheet", "editStatusesSheet", "settingsSheet"];
   function anySettingsSheetOpen() {
     return SETTINGS_SHEETS.some(function (k) { return !el[k].hidden; });
   }
@@ -1356,7 +1337,11 @@ var SEED_TASKS = [];
     row.addEventListener("click", function () {
       var target = row.getAttribute("data-target");
       if (target === "print") {
-        showOnlySettingsSheet(el.printSheet);
+        // No intermediate confirmation screen — closing back to Main first
+        // means whatever's behind the system print dialog, before and
+        // after, is the app itself, not the settings sheet.
+        closeSettingsFlow();
+        window.print();
       } else if (target === "editProjects") {
         renderEditProjectsList();
         showOnlySettingsSheet(el.editProjectsSheet);
@@ -1370,8 +1355,6 @@ var SEED_TASKS = [];
       }
     });
   });
-  document.getElementById("printBack").addEventListener("click", backToSettingsHome);
-  document.getElementById("printGo").addEventListener("click", function () { window.print(); });
   document.getElementById("editProjectsBack").addEventListener("click", backToSettingsHome);
   document.getElementById("addProjectBtn").addEventListener("click", addProjectFromInput);
   document.getElementById("addProjectInput").addEventListener("keydown", function (e) {

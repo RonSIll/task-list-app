@@ -172,6 +172,7 @@
     cursor: pointer;
   }
   .nav-tab.active { border: 2px solid #8e8e93; color: #1c1c1e; }
+  .nav-tab:disabled { cursor: default; opacity: 0.4; }
   .tab-badge {
     position: absolute; top: 4px; right: 6px;
     color: #8e8e93;
@@ -896,6 +897,9 @@
     el.projectFilterBtn.textContent = state.projectFilter || "Project";
     el.projectFilterBtn.classList.toggle("active", !!state.projectFilter);
     el.allProjectsBtn.classList.toggle("active", !state.projectFilter);
+    var inTriage = state.activeTab === "triage";
+    el.projectFilterBtn.disabled = inTriage;
+    el.allProjectsBtn.disabled = inTriage;
   }
 
   function renderNavTabs() {

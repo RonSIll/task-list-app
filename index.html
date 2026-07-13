@@ -256,21 +256,12 @@
   .proj-list { overflow-y: auto; max-height: 300px; margin: 0 -16px; padding: 0 16px; }
   .proj-edit-row {
     display: flex; align-items: center; gap: 6px; padding: 10px 0;
-    border-bottom: 0.5px solid var(--border);
+    background: var(--bg); position: relative; z-index: 1;
+    transition: transform 0.2s;
   }
-  .proj-edit-row.hidden-project { opacity: 0.4; }
-  .proj-edit-row:last-child { border-bottom: none; }
-  .proj-move-btn {
-    border: none; background: none; color: var(--text3); font-size: 14px; padding: 4px; cursor: pointer; line-height: 1;
-  }
-  .proj-move-btn:disabled { opacity: 0.3; cursor: default; }
   .proj-name-input {
     flex: 1; min-width: 0; border: none; background: transparent; color: var(--text);
     font-size: 15px; padding: 6px 4px; outline: none;
-  }
-  .proj-hide-btn {
-    border: none; background: none; color: var(--text2); padding: 4px; cursor: pointer;
-    display: flex; align-items: center;
   }
 
   /* Edit Statuses sub-sheet */
@@ -371,7 +362,7 @@
     <span></span>
     <button id="confirmClose">&#10005;</button>
   </div>
-  <div class="confirm-text">Delete Task?</div>
+  <div class="confirm-text" id="confirmText">Delete Task?</div>
   <div class="edit-selector-row">
     <button class="edit-select" id="confirmDelete">Delete</button>
     <button class="edit-select" id="confirmKeep">Keep</button>
@@ -551,7 +542,7 @@
   }
 
   function defaultProjectsState() {
-    return DEFAULT_PROJECTS.map(function (name) { return { name: name, hidden: false }; });
+    return DEFAULT_PROJECTS.map(function (name) { return { name: name }; });
   }
   function defaultStatusMetaState() {
     var m = {};
@@ -580,12 +571,10 @@
   }
 
   // ---------- Project helpers ----------
-  function visibleProjectNames() {
-    return state.projects.filter(function (p) { return !p.hidden; }).map(function (p) { return p.name; });
-  }
-  function isProjectHidden(name) {
-    var p = state.projects.find(function (x) { return x.name === name; });
-    return p ? p.hidden : false;
+  function projectNamesSorted() {
+    return state.projects.map(function (p) { return p.name; }).sort(function (a, b) {
+      return a.toLowerCase().localeCompare(b.toLowerCase());
+    });
   }
 
   // ---------- Persistence (local) ----------
@@ -736,16 +725,6 @@
   }
 
   // ---------- Project mutations ----------
-  function moveProject(index, dir) {
-    var newIndex = index + dir;
-    if (newIndex < 0 || newIndex >= state.projects.length) return;
-    var tmp = state.projects[index];
-    state.projects[index] = state.projects[newIndex];
-    state.projects[newIndex] = tmp;
-    persistAndSync();
-    renderEditProjectsList();
-  }
-
   function renameProject(index, newName) {
     var p = state.projects[index];
     if (!newName || newName === p.name) { renderEditProjectsList(); return; }
@@ -758,13 +737,10 @@
     renderEditProjectsList();
   }
 
-  function toggleProjectHidden(index) {
-    var p = state.projects[index];
-    p.hidden = !p.hidden;
-    if (p.hidden && state.projectFilter === p.name) {
-      state.projectFilter = null;
-      saveProjectFilter();
-    }
+  function deleteProject(name) {
+    state.projects = state.projects.filter(function (p) { return p.name !== name; });
+    state.tasks = state.tasks.filter(function (t) { return t.project !== name; });
+    if (state.projectFilter === name) { state.projectFilter = null; saveProjectFilter(); }
     persistAndSync();
     render();
     renderEditProjectsList();
@@ -774,7 +750,7 @@
     var input = document.getElementById("addProjectInput");
     var name = input.value.trim();
     if (!name) return;
-    state.projects.push({ name: name, hidden: false });
+    state.projects.push({ name: name });
     input.value = "";
     persistAndSync();
     renderEditProjectsList();
@@ -820,6 +796,7 @@
     projectFilterBtn: document.getElementById("projectFilterBtn"),
     allProjectsBtn: document.getElementById("allProjectsBtn"),
     confirmSheet: document.getElementById("confirmSheet"),
+    confirmText: document.getElementById("confirmText"),
     confirmDelete: document.getElementById("confirmDelete"),
     confirmKeep: document.getElementById("confirmKeep")
   };
@@ -830,26 +807,79 @@
   }
 
   // ---------- Delete confirmation ----------
-  var pendingDeleteId = null;
-  var pendingDeleteCancel = null;
+  // A generic staged-confirm sheet: messages is an array of one or more
+  // strings shown one at a time as Delete is tapped, only running onConfirm
+  // once the final stage's Delete is tapped. Task delete uses a single
+  // stage (unchanged behavior); project delete uses two, since deleting a
+  // project cascades to every task under it and has no undo.
+  var pendingConfirmMessages = null;
+  var pendingConfirmStage = 0;
+  var pendingConfirmAction = null;
+  var pendingConfirmCancel = null;
 
-  function requestDelete(taskId, onCancel) {
-    pendingDeleteId = taskId;
-    pendingDeleteCancel = onCancel || null;
+  var pendingConfirmRestoreSheet = null;
+
+  // restoreSheetEl: an already-open sheet (e.g. Edit Projects) to hide while
+  // the confirm sheet is showing and reveal again once it closes — same
+  // stacking pattern openPicker/closePicker use for the edit sheet, needed
+  // because two fixed-position .sheet elements at the same z-index would
+  // otherwise leave the one underneath intercepting pointer events.
+  function openConfirm(messages, onConfirm, onCancel, restoreSheetEl) {
+    pendingConfirmMessages = messages;
+    pendingConfirmStage = 0;
+    pendingConfirmAction = onConfirm;
+    pendingConfirmCancel = onCancel || null;
+    pendingConfirmRestoreSheet = restoreSheetEl || null;
+    if (pendingConfirmRestoreSheet) pendingConfirmRestoreSheet.hidden = true;
+    el.confirmText.textContent = messages[0];
     el.backdrop.hidden = false;
     el.confirmSheet.hidden = false;
     el.confirmDelete.focus();
   }
-  function closeDeleteConfirm() {
+  function closeConfirmSheet() {
     el.confirmSheet.hidden = true;
-    el.backdrop.hidden = true;
-    pendingDeleteId = null;
-    pendingDeleteCancel = null;
+    if (pendingConfirmRestoreSheet) {
+      pendingConfirmRestoreSheet.hidden = false;
+    } else {
+      el.backdrop.hidden = true;
+    }
+    pendingConfirmMessages = null;
+    pendingConfirmStage = 0;
+    pendingConfirmAction = null;
+    pendingConfirmCancel = null;
+    pendingConfirmRestoreSheet = null;
   }
-  function cancelDeleteConfirm() {
-    var cancel = pendingDeleteCancel;
-    closeDeleteConfirm();
+  function cancelConfirmSheet() {
+    var cancel = pendingConfirmCancel;
+    closeConfirmSheet();
     if (cancel) cancel();
+  }
+  function confirmSheetPrimaryClicked() {
+    if (pendingConfirmStage < pendingConfirmMessages.length - 1) {
+      pendingConfirmStage++;
+      el.confirmText.textContent = pendingConfirmMessages[pendingConfirmStage];
+      el.confirmDelete.focus();
+      return;
+    }
+    var action = pendingConfirmAction;
+    closeConfirmSheet();
+    if (action) action();
+  }
+
+  function requestDelete(taskId, onCancel) {
+    openConfirm(["Delete Task?"], function () { deleteTask(taskId); render(); }, onCancel);
+  }
+
+  function requestDeleteProject(index, onCancel) {
+    var p = state.projects[index];
+    var count = state.tasks.filter(function (t) { return t.project === p.name; }).length;
+    var countText = count === 1 ? "1 task" : count + " tasks";
+    openConfirm(
+      ["Delete \"" + p.name + "\" and its " + countText + "?", "Are you sure? This action cannot be undone."],
+      function () { deleteProject(p.name); },
+      onCancel,
+      el.editProjectsSheet
+    );
   }
 
   var GRID_STATUSES = STATUS_KEYS;
@@ -872,7 +902,7 @@
     el.tabMain.classList.toggle("active", state.activeTab === "main");
     el.tabTriage.classList.toggle("active", state.activeTab === "triage");
     var unassignedCount = state.tasks.filter(function (t) {
-      return (!t.project || !t.status) && !isProjectHidden(t.project);
+      return !t.project || !t.status;
     }).length;
     el.triageBadge.textContent = String(unassignedCount);
     el.triageBadge.hidden = unassignedCount === 0;
@@ -933,9 +963,8 @@
       return;
     }
 
-    var projectsToShow = state.projectFilter ? [state.projectFilter] : visibleProjectNames();
+    var projectsToShow = state.projectFilter ? [state.projectFilter] : projectNamesSorted();
     projectsToShow.forEach(function (project) {
-      if (isProjectHidden(project)) return;
       var projTasks = state.tasks.filter(function (t) { return t.project === project; });
       var visibleStatuses = STATUS_KEYS.filter(function (s) {
         return state.filter.indexOf(s) !== -1 && projTasks.some(function (t) { return t.status === s; });
@@ -958,11 +987,11 @@
       });
     });
 
-    if (el.content.children.length === 0 && state.projects.length > 0 && state.projects.every(function (p) { return p.hidden; })) {
-      var emptyHidden = document.createElement("div");
-      emptyHidden.className = "empty-state";
-      emptyHidden.textContent = "No projects visible — unhide one in Settings → Edit Projects.";
-      el.content.appendChild(emptyHidden);
+    if (el.content.children.length === 0 && state.projects.length === 0) {
+      var emptyProjects = document.createElement("div");
+      emptyProjects.className = "empty-state";
+      emptyProjects.textContent = "No projects yet — add one in Settings → Edit Projects.";
+      el.content.appendChild(emptyProjects);
     }
   }
 
@@ -995,11 +1024,14 @@
     });
     row.appendChild(delBtn);
 
-    attachSwipeToDelete(row, card, task.id);
+    attachSwipeToDelete(row, card, function (onCancel) { requestDelete(task.id, onCancel); });
     return row;
   }
 
-  function attachSwipeToDelete(row, card, taskId) {
+  // onSwipeDelete(onCancel) is called once the swipe crosses the delete
+  // threshold; onCancel resets the card's transform if the confirm is
+  // dismissed without confirming. Shared by task cards and project rows.
+  function attachSwipeToDelete(row, card, onSwipeDelete) {
     var startX = null, currentX = 0, dragging = false;
     card.addEventListener("touchstart", function (e) {
       startX = e.touches[0].clientX; dragging = true;
@@ -1010,11 +1042,16 @@
       if (currentX < 0) card.style.transform = "translateX(" + Math.max(currentX, -80) + "px)";
       row.classList.toggle("swiping-left", currentX < 0);
     }, { passive: true });
-    card.addEventListener("touchend", function () {
+    card.addEventListener("touchend", function (e) {
       dragging = false;
       row.classList.remove("swiping-left");
       if (currentX < -60) {
-        requestDelete(taskId, function () { card.style.transform = ""; });
+        // Without this, iOS still synthesizes a delayed "click" from this
+        // same touch after the confirm sheet's backdrop appears, landing on
+        // the backdrop and auto-cancelling the confirm sheet we just opened
+        // — the first Delete tap lands on a sheet already being torn down.
+        e.preventDefault();
+        onSwipeDelete(function () { card.style.transform = ""; });
       } else {
         card.style.transform = "";
       }
@@ -1025,7 +1062,7 @@
   function renderTriage() {
     el.content.innerHTML = "";
     var unassigned = state.tasks.filter(function (t) {
-      return (!t.project || !t.status) && !isProjectHidden(t.project);
+      return !t.project || !t.status;
     });
     if (unassigned.length === 0) {
       var empty = document.createElement("div");
@@ -1067,7 +1104,7 @@
     });
     row.appendChild(delBtn);
 
-    attachSwipeToDelete(row, card, task.id);
+    attachSwipeToDelete(row, card, function (onCancel) { requestDelete(task.id, onCancel); });
     return row;
   }
 
@@ -1354,29 +1391,29 @@
   }
 
   // ---------- Edit Projects ----------
-  var EYE_SVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
-  var EYE_OFF_SVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a21.8 21.8 0 0 1 5.06-6.06M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 8 11 8a21.8 21.8 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
-
   function renderEditProjectsList() {
     var list = document.getElementById("projList");
     list.innerHTML = "";
-    state.projects.forEach(function (p, i) {
+    // Display order is always alphabetical; state.projects itself keeps
+    // whatever order items were added in, so mutations below address the
+    // underlying array by its own index (i), not the sorted display order.
+    var order = state.projects.map(function (p, i) { return i; });
+    order.sort(function (a, b) {
+      return state.projects[a].name.toLowerCase().localeCompare(state.projects[b].name.toLowerCase());
+    });
+    order.forEach(function (i) {
+      var p = state.projects[i];
+
+      var rowWrap = document.createElement("div");
+      rowWrap.className = "card-row";
+
+      var deleteBg = document.createElement("div");
+      deleteBg.className = "card-delete-bg";
+      deleteBg.textContent = "Delete";
+      rowWrap.appendChild(deleteBg);
+
       var row = document.createElement("div");
-      row.className = "proj-edit-row" + (p.hidden ? " hidden-project" : "");
-
-      var up = document.createElement("button");
-      up.className = "proj-move-btn";
-      up.textContent = "▲";
-      up.disabled = i === 0;
-      up.addEventListener("click", function () { moveProject(i, -1); });
-      row.appendChild(up);
-
-      var down = document.createElement("button");
-      down.className = "proj-move-btn";
-      down.textContent = "▼";
-      down.disabled = i === state.projects.length - 1;
-      down.addEventListener("click", function () { moveProject(i, 1); });
-      row.appendChild(down);
+      row.className = "proj-edit-row";
 
       var input = document.createElement("input");
       input.type = "text";
@@ -1386,13 +1423,20 @@
       input.addEventListener("keydown", function (e) { if (e.key === "Enter") input.blur(); });
       row.appendChild(input);
 
-      var hideBtn = document.createElement("button");
-      hideBtn.className = "proj-hide-btn";
-      hideBtn.innerHTML = p.hidden ? EYE_OFF_SVG : EYE_SVG;
-      hideBtn.addEventListener("click", function () { toggleProjectHidden(i); });
-      row.appendChild(hideBtn);
+      rowWrap.appendChild(row);
 
-      list.appendChild(row);
+      var delBtn = document.createElement("button");
+      delBtn.className = "delete-hover";
+      delBtn.textContent = "×";
+      delBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        requestDeleteProject(i, null);
+      });
+      rowWrap.appendChild(delBtn);
+
+      attachSwipeToDelete(rowWrap, row, function (onCancel) { requestDeleteProject(i, onCancel); });
+
+      list.appendChild(rowWrap);
     });
   }
 
@@ -1477,7 +1521,7 @@
     var t = state.tasks.find(function (x) { return x.id === state.editingTaskId; });
     el.editSheet.hidden = true;
     pickerReturnFocusEl = el.editProject;
-    openPicker("Project", visibleProjectNames(), t ? t.project : null, null, function (val) {
+    openPicker("Project", projectNamesSorted(), t ? t.project : null, null, function (val) {
       commitEditField("project", val);
       renderEditProjectButton(val);
     }, true);
@@ -1508,7 +1552,7 @@
   });
 
   el.projectFilterBtn.addEventListener("click", function () {
-    openPicker("Project", visibleProjectNames(), state.projectFilter, null, function (val) {
+    openPicker("Project", projectNamesSorted(), state.projectFilter, null, function (val) {
       state.projectFilter = val;
       saveProjectFilter();
       state.activeTab = "main";
@@ -1562,17 +1606,13 @@
     closeSettingsFlow();
   });
 
-  document.getElementById("confirmDelete").addEventListener("click", function () {
-    var id = pendingDeleteId;
-    closeDeleteConfirm();
-    if (id) { deleteTask(id); render(); }
-  });
-  document.getElementById("confirmKeep").addEventListener("click", cancelDeleteConfirm);
-  document.getElementById("confirmClose").addEventListener("click", cancelDeleteConfirm);
+  document.getElementById("confirmDelete").addEventListener("click", confirmSheetPrimaryClicked);
+  document.getElementById("confirmKeep").addEventListener("click", cancelConfirmSheet);
+  document.getElementById("confirmClose").addEventListener("click", cancelConfirmSheet);
 
   el.backdrop.addEventListener("click", function () {
     if (!el.pickerSheet.hidden) { closePicker(); return; }
-    if (!el.confirmSheet.hidden) { cancelDeleteConfirm(); return; }
+    if (!el.confirmSheet.hidden) { cancelConfirmSheet(); return; }
     if (anySettingsSheetOpen()) { closeSettingsFlow(); return; }
     closeQuickAdd();
     closeEditSheet();

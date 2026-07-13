@@ -538,7 +538,11 @@
   function openSelectedFromList() {
     if (!listSelectedId) return;
     openEditSheet(listSelectedId);
-    el.editProject.focus();
+    if (state.activeTab === "triage") {
+      el.editProject.focus();
+    } else {
+      el.editTitle.focus();
+    }
   }
 
   function uid() {

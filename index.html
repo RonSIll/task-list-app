@@ -173,6 +173,9 @@
   }
   .nav-tab.active { border: 2px solid #8e8e93; color: #1c1c1e; }
   .nav-tab:disabled { cursor: default; opacity: 0.4; }
+  /* Triage: buttons fully hidden (not just dimmed), but visibility:hidden
+     keeps their layout box, so the row's height/spacing doesn't change. */
+  .project-row.triage-hidden .nav-tab { visibility: hidden; }
   .tab-badge {
     position: absolute; top: 4px; right: 6px;
     color: #8e8e93;
@@ -794,6 +797,7 @@
     tabMain: document.getElementById("tabMain"),
     tabTriage: document.getElementById("tabTriage"),
     triageBadge: document.getElementById("triageBadge"),
+    projectRow: document.getElementById("projectRow"),
     projectFilterBtn: document.getElementById("projectFilterBtn"),
     allProjectsBtn: document.getElementById("allProjectsBtn"),
     confirmSheet: document.getElementById("confirmSheet"),
@@ -900,6 +904,7 @@
     var inTriage = state.activeTab === "triage";
     el.projectFilterBtn.disabled = inTriage;
     el.allProjectsBtn.disabled = inTriage;
+    el.projectRow.classList.toggle("triage-hidden", inTriage);
   }
 
   function renderNavTabs() {

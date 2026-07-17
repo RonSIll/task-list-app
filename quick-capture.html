@@ -40,7 +40,6 @@
     background: var(--bg2); color: var(--text); font-family: inherit;
   }
   textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
-  .hint { font-size: 11px; color: var(--text3); }
   #addBtn {
     background: var(--accent); color: white; border: none; border-radius: 10px;
     padding: 11px; font-size: 15px; font-weight: 600; cursor: pointer;
@@ -68,13 +67,12 @@
 </head>
 <body>
 <header>
-  <h1>Quick Capture &rarr; Triage</h1>
+  <h1>New Task</h1>
   <button id="gearBtn" title="Settings">&#9881;</button>
 </header>
 <main id="main">
-  <textarea id="input" placeholder="Type or paste a task&#10;One per line for multiple tasks&#10;&#10;Enter to add, Shift+Enter for a line break"></textarea>
-  <div class="hint">Enter to add &middot; Shift+Enter for a line break &middot; each line becomes its own Triage task</div>
-  <button id="addBtn">Add to Triage</button>
+  <textarea id="input" placeholder="Task&#8230;"></textarea>
+  <button id="addBtn">Send</button>
   <div id="status"></div>
 </main>
 <div id="settings" hidden>

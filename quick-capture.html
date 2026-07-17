@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quick Capture</title>
+<style>
+  :root {
+    --bg: #ffffff; --bg2: #f4f4f6; --text: #1c1c1e; --text2: #6b6b70;
+    --text3: #a0a0a5; --border: #e3e3e6; --accent: #4f6bff; --red: #ff3b30;
+    --green: #16794f;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #000000; --bg2: #1c1c1e; --text: #f5f5f7; --text2: #98989d;
+      --text3: #6b6b70; --border: #2c2c2e; --accent: #7b8fff; --red: #ff453a;
+      --green: #4ade9e;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; height: 100vh; display: flex; flex-direction: column;
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 14px; border-bottom: 0.5px solid var(--border); flex: 0 0 auto;
+  }
+  header h1 { font-size: 15px; font-weight: 700; margin: 0; letter-spacing: -0.2px; }
+  #gearBtn {
+    background: none; border: none; color: var(--text3); cursor: pointer;
+    font-size: 16px; padding: 4px; line-height: 1;
+  }
+  main { flex: 1; display: flex; flex-direction: column; padding: 12px 14px; gap: 10px; min-height: 0; }
+  main[hidden] { display: none; }
+  textarea {
+    flex: 1; width: 100%; resize: none; border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px 12px; font-size: 15px; line-height: 1.4;
+    background: var(--bg2); color: var(--text); font-family: inherit;
+  }
+  textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  .hint { font-size: 11px; color: var(--text3); }
+  #addBtn {
+    background: var(--accent); color: white; border: none; border-radius: 10px;
+    padding: 11px; font-size: 15px; font-weight: 600; cursor: pointer;
+  }
+  #addBtn:disabled { opacity: 0.5; cursor: default; }
+  #status { font-size: 13px; min-height: 16px; }
+  #status.ok { color: var(--green); }
+  #status.err { color: var(--red); }
+  #settings {
+    padding: 14px; flex: 1; display: flex; flex-direction: column; gap: 12px;
+  }
+  #settings[hidden] { display: none; }
+  #settings label { font-size: 12px; color: var(--text2); }
+  #settings input {
+    width: 100%; border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 10px; font-size: 14px; background: var(--bg2); color: var(--text);
+    font-family: inherit;
+  }
+  #settings .row { display: flex; flex-direction: column; gap: 3px; }
+  #saveSettingsBtn {
+    background: var(--bg2); border: 1px solid var(--border); color: var(--text);
+    border-radius: 8px; padding: 8px; font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Quick Capture &rarr; Triage</h1>
+  <button id="gearBtn" title="Settings">&#9881;</button>
+</header>
+<main id="main">
+  <textarea id="input" placeholder="Type or paste a task&#10;One per line for multiple tasks&#10;&#10;Enter to add, Ctrl+Enter for a line break"></textarea>
+  <div class="hint">Enter to add &middot; Ctrl+Enter for a line break &middot; each line becomes its own Triage task</div>
+  <button id="addBtn">Add to Triage</button>
+  <div id="status"></div>
+</main>
+<div id="settings" hidden>
+  <div class="row">
+    <label for="patInput">GitHub token (fine-grained PAT, Contents: Read and write)</label>
+    <input id="patInput" type="password" placeholder="ghp_...">
+  </div>
+  <div class="row">
+    <label for="ownerInput">Owner</label>
+    <input id="ownerInput" type="text">
+  </div>
+  <div class="row">
+    <label for="repoInput">Repo</label>
+    <input id="repoInput" type="text">
+  </div>
+  <button id="saveSettingsBtn">Save</button>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var CONFIG_KEY = "quickCaptureGithubConfig";
+  var DATA_PATH = "tasks.json";
+  var DEFAULT_OWNER = "RonSIll";
+  var DEFAULT_REPO = "task-list-data";
+
+  var el = {
+    main: document.getElementById("main"),
+    input: document.getElementById("input"),
+    addBtn: document.getElementById("addBtn"),
+    status: document.getElementById("status"),
+    gearBtn: document.getElementById("gearBtn"),
+    settings: document.getElementById("settings"),
+    patInput: document.getElementById("patInput"),
+    ownerInput: document.getElementById("ownerInput"),
+    repoInput: document.getElementById("repoInput"),
+    saveSettingsBtn: document.getElementById("saveSettingsBtn")
+  };
+
+  var gh = null;
+
+  function loadConfig() {
+    try {
+      var raw = localStorage.getItem(CONFIG_KEY);
+      gh = raw ? JSON.parse(raw) : null;
+    } catch (e) { gh = null; }
+  }
+
+  function saveConfig() {
+    localStorage.setItem(CONFIG_KEY, JSON.stringify(gh));
+  }
+
+  function uid() {
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    return "t-" + Date.now() + "-" + Math.random().toString(16).slice(2);
+  }
+
+  function b64encode(str) {
+    return btoa(unescape(encodeURIComponent(str)));
+  }
+  function b64decode(str) {
+    return decodeURIComponent(escape(atob(str)));
+  }
+
+  function ghApiUrl() {
+    return "https://api.github.com/repos/" + gh.owner + "/" + gh.repo + "/contents/" + DATA_PATH;
+  }
+
+  function setStatus(msg, cls) {
+    el.status.textContent = msg;
+    el.status.className = cls || "";
+  }
+
+  function openSettings() {
+    el.patInput.value = gh && gh.pat ? gh.pat : "";
+    el.ownerInput.value = (gh && gh.owner) || DEFAULT_OWNER;
+    el.repoInput.value = (gh && gh.repo) || DEFAULT_REPO;
+    el.settings.hidden = false;
+    el.main.hidden = true;
+  }
+  function closeSettings() {
+    el.settings.hidden = true;
+    el.main.hidden = false;
+  }
+
+  el.gearBtn.addEventListener("click", function () {
+    if (el.settings.hidden) { openSettings(); } else { closeSettings(); el.input.focus(); }
+  });
+
+  el.saveSettingsBtn.addEventListener("click", function () {
+    var pat = el.patInput.value.trim();
+    var owner = el.ownerInput.value.trim() || DEFAULT_OWNER;
+    var repo = el.repoInput.value.trim() || DEFAULT_REPO;
+    if (!pat) {
+      setStatus("Token is required.", "err");
+      return;
+    }
+    gh = { pat: pat, owner: owner, repo: repo };
+    saveConfig();
+    closeSettings();
+    setStatus("Settings saved.", "ok");
+    el.input.focus();
+  });
+
+  function linesFromInput() {
+    return el.input.value
+      .split("\n")
+      .map(function (l) { return l.trim(); })
+      .filter(function (l) { return l.length > 0; });
+  }
+
+  function submit() {
+    var lines = linesFromInput();
+    if (lines.length === 0) return;
+    if (!gh || !gh.pat) {
+      setStatus("Set up your GitHub token first.", "err");
+      openSettings();
+      return;
+    }
+
+    el.addBtn.disabled = true;
+    setStatus("Saving…");
+
+    fetch(ghApiUrl(), { headers: { Authorization: "token " + gh.pat } })
+      .then(function (res) {
+        if (!res.ok) throw new Error("pull failed (" + res.status + ")");
+        return res.json();
+      })
+      .then(function (json) {
+        var data = JSON.parse(b64decode(json.content));
+        data.tasks = data.tasks || [];
+        lines.forEach(function (title) {
+          data.tasks.push({ id: uid(), title: title, project: null, status: null });
+        });
+        var body = {
+          message: "Quick Capture: " + lines.length + " task(s) to Triage",
+          content: b64encode(JSON.stringify(data)),
+          sha: json.sha
+        };
+        return fetch(ghApiUrl(), {
+          method: "PUT",
+          headers: { Authorization: "token " + gh.pat, "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        });
+      })
+      .then(function (res) {
+        if (!res.ok) throw new Error("push failed (" + res.status + ")");
+        return res.json();
+      })
+      .then(function () {
+        setStatus(lines.length === 1 ? "Added to Triage." : "Added " + lines.length + " tasks to Triage.", "ok");
+        el.input.value = "";
+        // window.close() is blocked by Chromium for windows not opened via
+        // window.open() (true of the --app= launcher window), so the title
+        // is used as a signal the launcher's PowerShell script polls for
+        // and closes externally via CloseMainWindow(). window.close() is
+        // still attempted first as a harmless no-op fallback in case a
+        // browser/config allows it.
+        window.close();
+        document.title = "Quick Capture - Done";
+      })
+      .catch(function (err) {
+        setStatus("Couldn't save — check your connection or token in Settings.", "err");
+        console.error(err);
+      })
+      .finally(function () {
+        el.addBtn.disabled = false;
+      });
+  }
+
+  el.addBtn.addEventListener("click", submit);
+  el.input.addEventListener("keydown", function (e) {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    if (e.ctrlKey || e.metaKey) {
+      var start = el.input.selectionStart;
+      var end = el.input.selectionEnd;
+      var val = el.input.value;
+      el.input.value = val.slice(0, start) + "\n" + val.slice(end);
+      el.input.selectionStart = el.input.selectionEnd = start + 1;
+      return;
+    }
+    submit();
+  });
+
+  loadConfig();
+  if (!gh || !gh.pat) {
+    openSettings();
+  } else {
+    el.input.focus();
+  }
+})();
+</script>
+</body>
+</html>

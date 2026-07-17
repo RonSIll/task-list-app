@@ -72,8 +72,8 @@
   <button id="gearBtn" title="Settings">&#9881;</button>
 </header>
 <main id="main">
-  <textarea id="input" placeholder="Type or paste a task&#10;One per line for multiple tasks&#10;&#10;Enter to add, Ctrl+Enter for a line break"></textarea>
-  <div class="hint">Enter to add &middot; Ctrl+Enter for a line break &middot; each line becomes its own Triage task</div>
+  <textarea id="input" placeholder="Type or paste a task&#10;One per line for multiple tasks&#10;&#10;Enter to add, Shift+Enter for a line break"></textarea>
+  <div class="hint">Enter to add &middot; Shift+Enter for a line break &middot; each line becomes its own Triage task</div>
   <button id="addBtn">Add to Triage</button>
   <div id="status"></div>
 </main>
@@ -250,7 +250,7 @@
   el.input.addEventListener("keydown", function (e) {
     if (e.key !== "Enter") return;
     e.preventDefault();
-    if (e.ctrlKey || e.metaKey) {
+    if (e.shiftKey) {
       var start = el.input.selectionStart;
       var end = el.input.selectionEnd;
       var val = el.input.value;

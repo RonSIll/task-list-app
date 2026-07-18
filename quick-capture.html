@@ -8,13 +8,13 @@
   :root {
     --bg: #ffffff; --bg2: #f4f4f6; --text: #1c1c1e; --text2: #6b6b70;
     --text3: #a0a0a5; --border: #e3e3e6; --accent: #4f6bff; --red: #ff3b30;
-    --green: #16794f;
+    --green: #16794f; --active: #84cc16; --active-on: #1c1c1e;
   }
   @media (prefers-color-scheme: dark) {
     :root {
       --bg: #000000; --bg2: #1c1c1e; --text: #f5f5f7; --text2: #98989d;
       --text3: #6b6b70; --border: #2c2c2e; --accent: #7b8fff; --red: #ff453a;
-      --green: #4ade9e;
+      --green: #4ade9e; --active: #a6e22e; --active-on: #1c1c1e;
     }
   }
   * { box-sizing: border-box; }
@@ -41,7 +41,7 @@
   }
   textarea:focus { outline: none; }
   #addBtn {
-    background: var(--accent); color: white; border: none; border-radius: 0;
+    background: var(--active); color: var(--active-on); border: none; border-radius: 0;
     padding: 11px; font-size: 15px; font-weight: 500; cursor: pointer;
   }
   #addBtn:disabled { opacity: 0.5; cursor: default; }

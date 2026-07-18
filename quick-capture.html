@@ -27,22 +27,22 @@
     display: flex; align-items: center; justify-content: space-between;
     padding: 10px 14px; border-bottom: 0.5px solid var(--border); flex: 0 0 auto;
   }
-  header h1 { font-size: 15px; font-weight: 700; margin: 0; letter-spacing: -0.2px; }
+  header h1 { font-size: 15px; font-weight: 600; margin: 0; }
   #gearBtn {
-    background: none; border: none; color: var(--text3); cursor: pointer;
-    font-size: 16px; padding: 4px; line-height: 1;
+    background: none; border: none; color: var(--text2); cursor: pointer;
+    padding: 4px; line-height: 1; display: flex; align-items: center;
   }
   main { flex: 1; display: flex; flex-direction: column; padding: 12px 14px; gap: 10px; min-height: 0; }
   main[hidden] { display: none; }
   textarea {
     flex: 1; width: 100%; resize: none; border: 1px solid var(--border);
-    border-radius: 10px; padding: 10px 12px; font-size: 24px; line-height: 1.4;
+    border-radius: 0; padding: 10px 12px; font-size: 24px; line-height: 1.4;
     background: var(--bg2); color: var(--text); font-family: inherit;
   }
-  textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  textarea:focus { outline: 2px solid var(--accent); outline-offset: -2px; }
   #addBtn {
-    background: var(--accent); color: white; border: none; border-radius: 10px;
-    padding: 11px; font-size: 15px; font-weight: 600; cursor: pointer;
+    background: var(--accent); color: white; border: none; border-radius: 0;
+    padding: 11px; font-size: 15px; font-weight: 500; cursor: pointer;
   }
   #addBtn:disabled { opacity: 0.5; cursor: default; }
   #status { font-size: 13px; min-height: 16px; }
@@ -54,21 +54,26 @@
   #settings[hidden] { display: none; }
   #settings label { font-size: 12px; color: var(--text2); }
   #settings input {
-    width: 100%; border: 1px solid var(--border); border-radius: 8px;
+    width: 100%; border: 1px solid var(--border); border-radius: 0;
     padding: 8px 10px; font-size: 14px; background: var(--bg2); color: var(--text);
     font-family: inherit;
   }
   #settings .row { display: flex; flex-direction: column; gap: 3px; }
   #saveSettingsBtn {
-    background: var(--bg2); border: 1px solid var(--border); color: var(--text);
-    border-radius: 8px; padding: 8px; font-size: 13px; font-weight: 600; cursor: pointer;
+    background: var(--accent); border: none; color: white;
+    border-radius: 0; padding: 8px; font-size: 13px; font-weight: 500; cursor: pointer;
   }
 </style>
 </head>
 <body>
 <header>
   <h1>New Task</h1>
-  <button id="gearBtn" title="Settings">&#9881;</button>
+  <button id="gearBtn" title="Settings">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82A1.65 1.65 0 0 0 3 13.09H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+    </svg>
+  </button>
 </header>
 <main id="main">
   <textarea id="input" placeholder="Task&#8230;"></textarea>
